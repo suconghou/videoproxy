@@ -57,9 +57,7 @@ func status(w http.ResponseWriter, r *http.Request) {
 	sysStatus.CPUNum = runtime.NumCPU()
 	sysStatus.GoVersion = runtime.Version()
 	sysStatus.Pid = os.Getpid()
-	if _, err := util.JSONPut(w, sysStatus); err != nil {
-		http.Error(w, err.Error(), 500)
-	}
+	util.JSONPut(w, sysStatus)
 }
 
 func routeMatch(w http.ResponseWriter, r *http.Request) {

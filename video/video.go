@@ -3,9 +3,17 @@ package video
 import (
 	"dropboxshare/request"
 	"dropboxshare/util"
+	"fmt"
 	"net/http"
 
 	"github.com/suconghou/youtubevideoparser"
+)
+
+var (
+	youtubeImageHostMap = map[string]string{
+		"jpg":  "http://i.ytimg.com/vi/",
+		"webp": "http://i.ytimg.com/vi_webp/",
+	}
 )
 
 type resp struct {
@@ -15,8 +23,12 @@ type resp struct {
 
 // Image proxy yputube image
 func Image(w http.ResponseWriter, r *http.Request, match []string) error {
-
-	return nil
+	var (
+		id  = match[1]
+		ext = match[2]
+		url = fmt.Sprintf("%s%s/%s.%s", youtubeImageHostMap[ext], id, "hqdefault", ext)
+	)
+	return request.Pipe(w, r, url, "")
 }
 
 // GetInfo for info
