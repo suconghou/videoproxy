@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	// Logger print to stdout
-	Logger = log.New(os.Stdout, "", 0)
+	// Log print to stdout
+	Log = log.New(os.Stdout, "", 0)
 )
 
 // JSONPut resp json

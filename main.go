@@ -36,15 +36,13 @@ func main() {
 	flag.IntVar(&port, "p", 6060, "listen port")
 	flag.StringVar(&host, "h", "", "bind address")
 	flag.Parse()
-	if err := serve(host, port); err != nil {
-		util.Logger.Print(err)
-	}
+	util.Log.Fatal(serve(host, port))
 }
 
 func serve(host string, port int) error {
 	http.HandleFunc("/", routeMatch)
 	http.HandleFunc("/status", status)
-	util.Logger.Printf("Starting up on port %d", port)
+	util.Log.Printf("Starting up on port %d", port)
 	return http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), nil)
 }
 
@@ -60,7 +58,7 @@ func status(w http.ResponseWriter, r *http.Request) {
 	sysStatus.GoVersion = runtime.Version()
 	sysStatus.Pid = os.Getpid()
 	if _, err := util.JSONPut(w, sysStatus); err != nil {
-		http.Error(w, fmt.Sprintf("%s", err), 500)
+		http.Error(w, err.Error(), 500)
 	}
 }
 
@@ -69,7 +67,9 @@ func routeMatch(w http.ResponseWriter, r *http.Request) {
 	for _, p := range route.RoutePath {
 		if p.Reg.MatchString(r.URL.Path) {
 			found = true
-			p.Handler(w, r, p.Reg.FindStringSubmatch(r.URL.Path))
+			if err := p.Handler(w, r, p.Reg.FindStringSubmatch(r.URL.Path)); err != nil {
+				util.Log.Print(err)
+			}
 			break
 		}
 	}
@@ -91,7 +91,7 @@ func fallback(w http.ResponseWriter, r *http.Request) {
 
 func tryFiles(files []string, w http.ResponseWriter, r *http.Request) bool {
 	for _, file := range files {
-		realpath := filepath.Join(".", file)
+		realpath := filepath.Join("./public", file)
 		if f, err := os.Stat(realpath); err == nil {
 			if f.Mode().IsRegular() {
 				http.ServeFile(w, r, realpath)
