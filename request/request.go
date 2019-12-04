@@ -17,6 +17,8 @@ var (
 		"If-Modified-Since",
 		"If-None-Match",
 		"Range",
+		"Content-Length",
+		"Content-Type",
 	}
 	exposeHeaders = []string{
 		"Accept-Ranges",
