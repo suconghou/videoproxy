@@ -59,6 +59,9 @@ func Pipe(w http.ResponseWriter, r *http.Request, url string, ts string) error {
 	to := w.Header()
 	copyHeader(resp.Header, to, exposeHeaders)
 	to.Set("Cache-Control", "public, max-age=604800")
+	if ts != "" {
+		to.Del("Accept-Ranges")
+	}
 	w.WriteHeader(resp.StatusCode)
 	_, err = io.Copy(w, resp.Body)
 	return err
