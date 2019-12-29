@@ -1,8 +1,6 @@
 package main
 
 import (
-	"dropboxshare/route"
-	"dropboxshare/util"
 	"flag"
 	"fmt"
 	"net/http"
@@ -11,6 +9,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"time"
+	"videoproxy/route"
+	"videoproxy/util"
 )
 
 var (

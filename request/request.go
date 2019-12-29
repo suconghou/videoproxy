@@ -52,6 +52,10 @@ func Pipe(w http.ResponseWriter, r *http.Request, url string, ts string) error {
 		return err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusPartialContent && ts != "" {
+		resp.StatusCode = http.StatusOK
+		resp.Header.Del("Content-Range")
+	}
 	to := w.Header()
 	copyHeader(resp.Header, to, exposeHeaders)
 	to.Set("Cache-Control", "public, max-age=604800")

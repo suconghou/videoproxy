@@ -1,10 +1,10 @@
 package video
 
 import (
-	"dropboxshare/request"
-	"dropboxshare/util"
 	"fmt"
 	"net/http"
+	"videoproxy/request"
+	"videoproxy/util"
 
 	"github.com/suconghou/youtubevideoparser"
 )
@@ -77,6 +77,6 @@ func proxy(w http.ResponseWriter, r *http.Request, id string, itag string, ts st
 	if v, has := info.Streams[itag]; has {
 		return request.Pipe(w, r, v.URL, ts)
 	}
-	http.Error(w, "404 page not found", http.StatusNotFound)
+	http.NotFound(w, r)
 	return nil
 }
