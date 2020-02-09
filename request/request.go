@@ -75,3 +75,22 @@ func copyHeader(from http.Header, to http.Header, headers []string) http.Header 
 	}
 	return to
 }
+
+// ProxyCall call api
+func ProxyCall(w http.ResponseWriter, url string) error {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+	defer resp.Body.Close()
+	w.Header().Set("Cache-Control", "public, max-age=604800")
+	w.WriteHeader(resp.StatusCode)
+	_, err = io.Copy(w, resp.Body)
+	return err
+}
