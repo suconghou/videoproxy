@@ -20,6 +20,8 @@ GET `/video/{ID}.jpg` `/image/{ID}.webp`
 GET `/video/api/v3/videos` 
 
 > id : 视频ID
+>
+> chart=mostPopular&maxResults=20
 
 GET `/video/api/v3/search` 
 

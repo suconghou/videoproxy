@@ -21,7 +21,7 @@ type resp struct {
 	Msg  string `json:"msg"`
 }
 
-// Image proxy yputube image
+// Image proxy yputube image , default/mqdefault/hqdefault/sddefault/maxresdefault
 func Image(w http.ResponseWriter, r *http.Request, match []string) error {
 	var (
 		id  = match[1]

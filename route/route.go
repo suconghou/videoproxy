@@ -24,4 +24,5 @@ var RoutePath = []routeInfo{
 	{regexp.MustCompile(`^/video/api/(v3/channels)$`), video.Channels},
 	{regexp.MustCompile(`^/video/api/(v3/playlists)$`), video.Playlists},
 	{regexp.MustCompile(`^/video/api/(v3/playlistItems)$`), video.PlaylistItems},
+	{regexp.MustCompile(`^/video/api/(v3/videoCategories)$`), video.Categories},
 }
