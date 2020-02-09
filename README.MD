@@ -40,6 +40,8 @@ GET `/video/api/v3/channels`
 > forUsername
 > 
 > id
+>
+> categoryId 
 
 GET `/video/api/v3/playlists` 
 
@@ -52,6 +54,8 @@ GET `/video/api/v3/playlistItems`
 > playlistId
 
 > pageToken
+
+所有接口支持`callback`参数,可用于JSONP
 
 ## 环境变量
 

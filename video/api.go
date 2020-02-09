@@ -31,10 +31,10 @@ func Search(w http.ResponseWriter, r *http.Request, match []string) error {
 	return call(w, r, match[1], q)
 }
 
-// Channels proxy api , ?forUsername=.. / ?id=..
+// Channels proxy api , ?forUsername=.. / ?id=.. / ?categoryId=..
 func Channels(w http.ResponseWriter, r *http.Request, match []string) error {
 	var q = r.URL.Query()
-	q.Set("part", "id,snippet,contentDetails,statistics,invideoPromotion")
+	q.Set("part", "id,snippet,contentDetails,statistics")
 	return call(w, r, match[1], q)
 }
 
