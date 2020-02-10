@@ -34,6 +34,8 @@ GET `/video/api/v3/search`
 > channelId : 选填
 >
 > pageToken : 选填
+>
+> maxResults
 
 GET `/video/api/v3/channels` 
 
@@ -52,10 +54,14 @@ GET `/video/api/v3/playlists`
 GET `/video/api/v3/playlistItems` 
 
 > playlistId
-
+>
 > pageToken
+>
+> maxResults
 
 所有接口支持`callback`参数,可用于JSONP
+
+maxResults 取值返回 1-50
 
 ## 环境变量
 

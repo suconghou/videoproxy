@@ -26,7 +26,7 @@ func Image(w http.ResponseWriter, r *http.Request, match []string) error {
 	var (
 		id  = match[1]
 		ext = match[2]
-		url = fmt.Sprintf("%s%s/%s.%s", youtubeImageHostMap[ext], id, "hqdefault", ext)
+		url = fmt.Sprintf("%s%s/%s.%s", youtubeImageHostMap[ext], id, "mqdefault", ext)
 	)
 	return request.Pipe(w, r, url, "")
 }

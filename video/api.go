@@ -19,15 +19,14 @@ const (
 // Videos proxy api to get video info , ?id=.. / ?chart=mostPopular&maxResults=20
 func Videos(w http.ResponseWriter, r *http.Request, match []string) error {
 	var q = r.URL.Query()
-	q.Set("part", "id, snippet, contentDetails, statistics")
+	q.Set("part", "id,snippet,contentDetails,statistics")
 	return call(w, r, match[1], q)
 }
 
 // Search proxy api , ?q=keyword&type=video&order=..&channelId=..
 func Search(w http.ResponseWriter, r *http.Request, match []string) error {
 	var q = r.URL.Query()
-	q.Set("part", "id, snippet")
-	q.Set("maxResults", "10")
+	q.Set("part", "id,snippet")
 	return call(w, r, match[1], q)
 }
 
@@ -41,22 +40,21 @@ func Channels(w http.ResponseWriter, r *http.Request, match []string) error {
 // Playlists proxy api , ?id=.. / ?channelId=..
 func Playlists(w http.ResponseWriter, r *http.Request, match []string) error {
 	var q = r.URL.Query()
-	q.Set("part", "id, snippet")
+	q.Set("part", "id,snippet")
 	return call(w, r, match[1], q)
 }
 
 // PlaylistItems proxy api , ?playlistId=..
 func PlaylistItems(w http.ResponseWriter, r *http.Request, match []string) error {
 	var q = r.URL.Query()
-	q.Set("part", "id, snippet, contentDetails")
-	q.Set("maxResults", "50")
+	q.Set("part", "id,snippet,contentDetails")
 	return call(w, r, match[1], q)
 }
 
 // Categories proxy api , ?id=.. / ?regionCode=
 func Categories(w http.ResponseWriter, r *http.Request, match []string) error {
 	var q = r.URL.Query()
-	q.Set("part", "id, snippet")
+	q.Set("part", "id,snippet")
 	return call(w, r, match[1], q)
 }
 
