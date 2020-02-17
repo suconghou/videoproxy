@@ -22,6 +22,8 @@ GET `/video/api/v3/videos`
 > id : 视频ID
 >
 > chart=mostPopular&maxResults=20
+> 
+> regionCode
 
 GET `/video/api/v3/search` 
 
@@ -36,6 +38,10 @@ GET `/video/api/v3/search`
 > pageToken : 选填
 >
 > maxResults
+>
+> relatedToVideoId
+>
+> regionCode
 
 GET `/video/api/v3/channels` 
 
