@@ -1,8 +1,6 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"net/http"
 	"os"
 	"path"
@@ -29,21 +27,18 @@ var sysStatus struct {
 }
 
 func main() {
-	var (
-		port int
-		host string
-	)
-	flag.IntVar(&port, "p", 6060, "listen port")
-	flag.StringVar(&host, "h", "", "bind address")
-	flag.Parse()
-	util.Log.Fatal(serve(host, port))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	util.Log.Fatal(serve(port))
 }
 
-func serve(host string, port int) error {
+func serve(port string) error {
 	http.HandleFunc("/", routeMatch)
 	http.HandleFunc("/status", status)
-	util.Log.Printf("Starting up on port %d", port)
-	return http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), nil)
+	util.Log.Printf("Starting up on port %s", port)
+	return http.ListenAndServe(":"+port, nil)
 }
 
 func status(w http.ResponseWriter, r *http.Request) {
@@ -83,7 +78,9 @@ func fallback(w http.ResponseWriter, r *http.Request) {
 		files = []string{r.URL.Path, path.Join(r.URL.Path, index)}
 	}
 	if !tryFiles(files, w, r) {
-		http.NotFound(w, r)
+		if !tryFiles([]string{index}, w, r) {
+			http.NotFound(w, r)
+		}
 	}
 }
 
