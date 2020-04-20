@@ -1,11 +1,12 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"time"
 	"videoproxy/route"
 	"videoproxy/util"
@@ -27,32 +28,18 @@ var sysStatus struct {
 }
 
 func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-	util.Log.Fatal(serve(port))
+	var (
+		port = flag.Int("p", 6060, "listen port")
+		host = flag.String("h", "", "bind address")
+	)
+	flag.Parse()
+	util.Log.Fatal(serve(*host, *port))
 }
 
-func serve(port string) error {
+func serve(host string, port int) error {
 	http.HandleFunc("/", routeMatch)
-	http.HandleFunc("/status", status)
-	util.Log.Printf("Starting up on port %s", port)
-	return http.ListenAndServe(":"+port, nil)
-}
-
-func status(w http.ResponseWriter, r *http.Request) {
-	memStat := new(runtime.MemStats)
-	runtime.ReadMemStats(memStat)
-	sysStatus.Uptime = time.Since(startTime).String()
-	sysStatus.NumGoroutine = runtime.NumGoroutine()
-	sysStatus.MemAllocated = memStat.Alloc
-	sysStatus.MemTotal = memStat.TotalAlloc
-	sysStatus.MemSys = memStat.Sys
-	sysStatus.CPUNum = runtime.NumCPU()
-	sysStatus.GoVersion = runtime.Version()
-	sysStatus.Pid = os.Getpid()
-	util.JSONPut(w, sysStatus)
+	util.Log.Printf("Starting up on port %d", port)
+	return http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), nil)
 }
 
 func routeMatch(w http.ResponseWriter, r *http.Request) {
