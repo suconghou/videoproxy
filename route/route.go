@@ -12,8 +12,8 @@ type routeInfo struct {
 	Handler func(http.ResponseWriter, *http.Request, []string) error
 }
 
-// RoutePath for all route
-var RoutePath = []routeInfo{
+// Route for all route
+var Route = []routeInfo{
 	{regexp.MustCompile(`^/video/([\w\-]{6,12})\.json$`), video.GetInfo},
 	{regexp.MustCompile(`^/video/([\w\-]{6,12})/(\d{1,3})\.(mp4|webm)$`), video.ProxyOne},
 	{regexp.MustCompile(`^/video/([\w\-]{6,12})/(\d{1,3})/(\d+-\d+)\.ts$`), video.ProxyPart},
