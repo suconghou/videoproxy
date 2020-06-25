@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"videoproxy/request"
+
+	"github.com/suconghou/videoproxy/request"
 )
 
 var (

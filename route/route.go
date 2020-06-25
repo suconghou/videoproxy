@@ -3,7 +3,8 @@ package route
 import (
 	"net/http"
 	"regexp"
-	"videoproxy/video"
+
+	"github.com/suconghou/videoproxy/video"
 )
 
 // 路由定义

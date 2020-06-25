@@ -7,6 +7,8 @@ youtube stream proxy
 
 接口前缀均为`/video`
 
+**解析接口**
+
 GET `/video/{ID}.json`
 
 GET `/video/{ID}/{ITAG}.mp4` `/video/{ID}/{ITAG}.webm`
@@ -15,7 +17,7 @@ GET `/video/{ID}/{ITAG}/{TS}.ts`
 
 GET `/video/{ID}.jpg` `/image/{ID}.webp`
 
-**内容接口**
+**6个内容接口**
 
 GET `/video/api/v3/videos` 
 

@@ -3,8 +3,9 @@ package video
 import (
 	"fmt"
 	"net/http"
-	"videoproxy/request"
-	"videoproxy/util"
+
+	"github.com/suconghou/videoproxy/request"
+	"github.com/suconghou/videoproxy/util"
 
 	"github.com/suconghou/youtubevideoparser"
 )
@@ -21,6 +22,14 @@ type resp struct {
 	Msg  string `json:"msg"`
 }
 
+func getinfo(id string) (*youtubevideoparser.VideoInfo, error) {
+	parser, err := youtubevideoparser.NewParser(id)
+	if err != nil {
+		return nil, err
+	}
+	return parser.Parse()
+}
+
 // Image proxy yputube image , default/mqdefault/hqdefault/sddefault/maxresdefault
 func Image(w http.ResponseWriter, r *http.Request, match []string) error {
 	var (
@@ -28,25 +37,25 @@ func Image(w http.ResponseWriter, r *http.Request, match []string) error {
 		ext = match[2]
 		url = fmt.Sprintf("%s%s/%s.%s", youtubeImageHostMap[ext], id, "mqdefault", ext)
 	)
-	return request.Pipe(w, r, url, "")
+	return request.Pipe(w, r, url)
 }
 
 // GetInfo for info
 func GetInfo(w http.ResponseWriter, r *http.Request, match []string) error {
 	var (
-		info        *youtubevideoparser.VideoInfo
-		id          = match[1]
-		parser, err = youtubevideoparser.NewParser(id)
+		info, err = getinfo(match[1])
 	)
 	if err != nil {
-		util.JSONPut(w, resp{-1, err.Error()})
+		util.JSONPut(w, resp{-1, err.Error()}, http.StatusInternalServerError, 1)
 		return err
 	}
-	if info, err = parser.Parse(); err != nil {
-		util.JSONPut(w, resp{-2, err.Error()})
-		return err
+	// 为使接口长缓存,默认不出易失效数据
+	if r.URL.Query().Get("info") != "all" {
+		for _, s := range info.Streams {
+			s.URL = ""
+		}
 	}
-	_, err = util.JSONPut(w, info)
+	_, err = util.JSONPut(w, info, http.StatusOK, 604800)
 	return err
 }
 
@@ -63,20 +72,19 @@ func ProxyPart(w http.ResponseWriter, r *http.Request, match []string) error {
 // proxy proxy a range part
 func proxy(w http.ResponseWriter, r *http.Request, id string, itag string, ts string) error {
 	var (
-		info        *youtubevideoparser.VideoInfo
-		parser, err = youtubevideoparser.NewParser(id)
+		info, err = getinfo(id)
 	)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
-	if info, err = parser.Parse(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return err
+	s := info.Streams[itag]
+	if s == nil {
+		http.NotFound(w, r)
+		return nil
 	}
-	if v, has := info.Streams[itag]; has {
-		return request.Pipe(w, r, v.URL, ts)
+	if ts == "" {
+		return request.Pipe(w, r, s.URL)
 	}
-	http.NotFound(w, r)
-	return nil
+	return request.ProxyData(w, r, s.URL+"&range="+ts)
 }

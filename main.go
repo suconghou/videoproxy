@@ -8,8 +8,9 @@ import (
 	"path"
 	"path/filepath"
 	"time"
-	"videoproxy/route"
-	"videoproxy/util"
+
+	"github.com/suconghou/videoproxy/route"
+	"github.com/suconghou/videoproxy/util"
 )
 
 var (
