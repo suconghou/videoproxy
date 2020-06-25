@@ -7,26 +7,10 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"time"
 
 	"github.com/suconghou/videoproxy/route"
 	"github.com/suconghou/videoproxy/util"
 )
-
-var (
-	startTime = time.Now()
-)
-
-var sysStatus struct {
-	Uptime       string
-	GoVersion    string
-	MemAllocated uint64
-	MemTotal     uint64
-	MemSys       uint64
-	NumGoroutine int
-	CPUNum       int
-	Pid          int
-}
 
 func main() {
 	var (
