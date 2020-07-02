@@ -60,7 +60,9 @@ func Categories(w http.ResponseWriter, r *http.Request, match []string) error {
 }
 
 func call(w http.ResponseWriter, r *http.Request, t string, q url.Values) error {
-	q.Set("key", key)
+	if q.Get("key") == "" {
+		q.Set("key", key)
+	}
 	var url = fmt.Sprintf(baseURL, t) + "?" + q.Encode()
 	return request.ProxyCall(w, url)
 }

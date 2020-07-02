@@ -186,7 +186,7 @@ func copyHeader(from http.Header, to http.Header, headers []string) http.Header 
 	return to
 }
 
-// ProxyCall call api
+// ProxyCall call api with long cache
 func ProxyCall(w http.ResponseWriter, url string) error {
 	bs, status, err := GetURLData(url)
 	if err != nil {
