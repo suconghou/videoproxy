@@ -75,3 +75,42 @@ maxResults 取值返回 1-50
 
 `YOUTUBE_API_KEY`
 
+
+## run in docker
+
+```
+docker run -d -m 100m \
+--name videoproxy \
+--restart always \
+-p 0.0.0.0:8080:6060 \
+-e YOUTUBE_API_KEY="yourkey" \
+suconghou/videoproxy
+```
+
+## run in k8s
+
+
+创建deployment
+```
+kubectl run videoproxy \
+--image=suconghou/videoproxy \
+--env="YOUTUBE_API_KEY=yourkey" \
+--port=6060 \
+--limits="cpu=200m,memory=100Mi"
+```
+
+创建service
+
+```
+kubectl expose deployment/videoproxy \
+--type="NodePort" \
+--port=6060 \
+--name=videoproxy
+```
+
+对应删除命令
+
+```
+kubectl delete deployment videoproxy 
+kubectl delete service videoproxy
+```
