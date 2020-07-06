@@ -145,7 +145,7 @@ func ProxyData(w http.ResponseWriter, r *http.Request, url string) error {
 	}
 	defer res.Body.Close()
 	to := w.Header()
-	to.Set("Cache-Control", "public, max-age=604800")
+	to.Set("Cache-Control", "public, max-age=864000")
 	to.Set("Access-Control-Allow-Origin", "*")
 	copyHeader(res.Header, to, exposeHeadersBasic)
 	w.WriteHeader(res.StatusCode)
@@ -170,7 +170,7 @@ func Pipe(w http.ResponseWriter, r *http.Request, url string) error {
 	defer resp.Body.Close()
 	to := w.Header()
 	copyHeader(resp.Header, to, exposeHeaders)
-	to.Set("Cache-Control", "public, max-age=604800")
+	to.Set("Cache-Control", "public, max-age=864000")
 	to.Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(resp.StatusCode)
 	_, err = io.Copy(w, resp.Body)
@@ -196,7 +196,7 @@ func ProxyCall(w http.ResponseWriter, url string) error {
 	h := w.Header()
 	h.Set("Content-Type", "text/json; charset=utf-8")
 	h.Set("Access-Control-Allow-Origin", "*")
-	h.Set("Cache-Control", "public,max-age=604800")
+	h.Set("Cache-Control", "public,max-age=864000")
 	w.WriteHeader(status)
 	_, err = w.Write(bs)
 	return err

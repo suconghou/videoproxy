@@ -55,7 +55,7 @@ func GetInfo(w http.ResponseWriter, r *http.Request, match []string) error {
 			s.URL = ""
 		}
 	}
-	_, err = util.JSONPut(w, info, http.StatusOK, 604800)
+	_, err = util.JSONPut(w, info, http.StatusOK, 864000)
 	return err
 }
 
