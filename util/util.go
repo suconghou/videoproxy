@@ -1,6 +1,8 @@
 package util
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -25,4 +27,19 @@ func JSONPut(w http.ResponseWriter, v interface{}, status int, age int) (int, er
 	h.Set("Cache-Control", fmt.Sprintf("public,max-age=%d", age))
 	w.WriteHeader(status)
 	return w.Write(bs)
+}
+
+// GzipEncode gzip data
+func GzipEncode(data []byte) ([]byte, error) {
+	var in bytes.Buffer
+	w := gzip.NewWriter(&in)
+	_, err := w.Write(data)
+	if err != nil {
+		return nil, err
+	}
+	err = w.Close()
+	if err != nil {
+		return nil, err
+	}
+	return in.Bytes(), nil
 }

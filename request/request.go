@@ -4,13 +4,17 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"sync"
 	"time"
+
+	"github.com/suconghou/videoproxy/util"
 )
 
 var (
-	client     = &http.Client{Timeout: time.Minute}
-	fwdHeaders = []string{
+	disableGzip = os.Getenv("DISABLE_GZIP")
+	client      = &http.Client{Timeout: time.Minute}
+	fwdHeaders  = []string{
 		"User-Agent",
 		"Accept",
 		"Accept-Encoding",
@@ -193,11 +197,30 @@ func ProxyCall(w http.ResponseWriter, url string) error {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
-	h := w.Header()
+	var (
+		h      = w.Header()
+		gziped bool
+	)
+	bs, gziped = gzipResponse(bs)
+	if gziped {
+		h.Set("Content-Encoding", "gzip")
+	}
 	h.Set("Content-Type", "text/json; charset=utf-8")
 	h.Set("Access-Control-Allow-Origin", "*")
 	h.Set("Cache-Control", "public,max-age=864000")
 	w.WriteHeader(status)
 	_, err = w.Write(bs)
 	return err
+}
+
+func gzipResponse(bs []byte) ([]byte, bool) {
+	if disableGzip != "" || len(bs) < 512 {
+		return bs, false
+	}
+	gz, err := util.GzipEncode(bs)
+	if err == nil {
+		return gz, true
+	}
+	util.Log.Println("gz error", err)
+	return bs, false
 }
