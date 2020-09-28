@@ -205,7 +205,7 @@ func ProxyCall(w http.ResponseWriter, url string) error {
 	if gziped {
 		h.Set("Content-Encoding", "gzip")
 	}
-	h.Set("Content-Type", "text/json; charset=utf-8")
+	h.Set("Content-Type", "application/json; charset=utf-8")
 	h.Set("Access-Control-Allow-Origin", "*")
 	h.Set("Cache-Control", "public,max-age=864000")
 	w.WriteHeader(status)

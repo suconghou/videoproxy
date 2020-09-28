@@ -22,7 +22,7 @@ func JSONPut(w http.ResponseWriter, v interface{}, status int, age int) (int, er
 		return 0, err
 	}
 	h := w.Header()
-	h.Set("Content-Type", "text/json; charset=utf-8")
+	h.Set("Content-Type", "application/json; charset=utf-8")
 	h.Set("Access-Control-Allow-Origin", "*")
 	h.Set("Cache-Control", fmt.Sprintf("public,max-age=%d", age))
 	w.WriteHeader(status)
