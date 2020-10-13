@@ -75,6 +75,52 @@ maxResults 取值返回 1-50
 
 `YOUTUBE_API_KEY`
 
+> data api 用到的key, data api 数据默认缓存48h
+
+`DISABLE_GZIP`
+
+> data api 默认开启gzip,若前置nginx开启gzip,可关闭此项
+
+
+命令行参数
+
+> -p listen port
+>
+> -h bind address
+>
+
+**代理选项**
+
+代理分为三部分,均由环境变量配置
+
+1. image proxy
+
+> `IMAGE_PROXY`
+>
+> 可访问时,一般不需要使用代理
+
+2. video parser proxy & video stream proxy
+
+> `VIDEO_PROXY`
+>
+> 此二者的代理是保持一致的
+
+3. data api proxy
+
+> `API_PROXY`
+>
+> 可以单独配置它的代理,不过一般无需配置
+
+代理格式可写http或者socks5格式,程序自动适配
+
+http格式: `http://proxyIp:proxyPort`
+
+socks5格式: `127.0.0.1:9050`
+
+
+若都不配置,也可使用GO的代理配置,对所有请求有效
+
+`export http_proxy=http://0.0.0.0:1087;export https_proxy=http://0.0.0.0:1087;`
 
 ## run in docker
 

@@ -5,17 +5,27 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/suconghou/videoproxy/request"
+	"github.com/suconghou/videoproxy/util"
 )
 
 var (
-	key = os.Getenv("YOUTUBE_API_KEY")
+	key       = os.Getenv("YOUTUBE_API_KEY")
+	apiClient = http.Client{Timeout: time.Minute}
 )
 
 const (
 	baseURL = "https://www.googleapis.com/youtube/%s"
 )
+
+func init() {
+	apiproxy := os.Getenv("API_PROXY")
+	if apiproxy != "" {
+		apiClient = util.MakeClient(apiproxy, time.Minute)
+	}
+}
 
 // Videos proxy api to get video info , ?id=.. / ?chart=mostPopular&maxResults=20
 func Videos(w http.ResponseWriter, r *http.Request, match []string) error {
@@ -64,5 +74,5 @@ func call(w http.ResponseWriter, r *http.Request, t string, q url.Values) error 
 		q.Set("key", key)
 	}
 	var url = fmt.Sprintf(baseURL, t) + "?" + q.Encode()
-	return request.ProxyCall(w, url)
+	return request.ProxyCall(w, url, apiClient)
 }

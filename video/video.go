@@ -3,6 +3,8 @@ package video
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/suconghou/videoproxy/request"
 	"github.com/suconghou/videoproxy/util"
@@ -11,6 +13,8 @@ import (
 )
 
 var (
+	imageClient         = http.Client{Timeout: time.Minute}
+	videoClient         = http.Client{Timeout: time.Minute}
 	youtubeImageHostMap = map[string]string{
 		"jpg":  "http://i.ytimg.com/vi/",
 		"webp": "http://i.ytimg.com/vi_webp/",
@@ -22,8 +26,19 @@ type resp struct {
 	Msg  string `json:"msg"`
 }
 
+func init() {
+	imageproxy := os.Getenv("IMAGE_PROXY")
+	videoproxy := os.Getenv("VIDEO_PROXY")
+	if imageproxy != "" {
+		imageClient = util.MakeClient(imageproxy, time.Minute)
+	}
+	if videoproxy != "" {
+		videoClient = util.MakeClient(videoproxy, time.Minute)
+	}
+}
+
 func getinfo(id string) (*youtubevideoparser.VideoInfo, error) {
-	parser, err := youtubevideoparser.NewParser(id)
+	parser, err := youtubevideoparser.NewParser(id, videoClient)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +52,7 @@ func Image(w http.ResponseWriter, r *http.Request, match []string) error {
 		ext = match[2]
 		url = fmt.Sprintf("%s%s/%s.%s", youtubeImageHostMap[ext], id, "mqdefault", ext)
 	)
-	return request.Pipe(w, r, url)
+	return request.Pipe(w, r, url, imageClient)
 }
 
 // GetInfo for info
@@ -84,7 +99,7 @@ func proxy(w http.ResponseWriter, r *http.Request, id string, itag string, ts st
 		return nil
 	}
 	if ts == "" {
-		return request.Pipe(w, r, s.URL)
+		return request.Pipe(w, r, s.URL, videoClient)
 	}
-	return request.ProxyData(w, r, s.URL+"&range="+ts)
+	return request.ProxyData(w, r, s.URL+"&range="+ts, videoClient)
 }

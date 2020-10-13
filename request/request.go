@@ -13,7 +13,6 @@ import (
 
 var (
 	disableGzip = os.Getenv("DISABLE_GZIP")
-	client      = &http.Client{Timeout: time.Minute}
 	fwdHeaders  = []string{
 		"User-Agent",
 		"Accept",
@@ -71,12 +70,12 @@ var (
 	}
 )
 
-func (by *bytecache) geturl(url string) ([]byte, int, error) {
+func (by *bytecache) geturl(url string, client http.Client) ([]byte, int, error) {
 	var bs, status = by.get(url)
 	if bs != nil {
 		return bs, status, nil
 	}
-	res, status, err := GetURLBody(url)
+	res, status, err := GetURLBody(url, client)
 	if err != nil {
 		return nil, status, err
 	}
@@ -115,12 +114,12 @@ func (by *bytecache) expire() {
 }
 
 // GetURLData check cache and get from url
-func GetURLData(url string) ([]byte, int, error) {
-	return longCacher.geturl(url)
+func GetURLData(url string, client http.Client) ([]byte, int, error) {
+	return longCacher.geturl(url, client)
 }
 
 // GetURLBody run quick get no cache
-func GetURLBody(url string) ([]byte, int, error) {
+func GetURLBody(url string, client http.Client) ([]byte, int, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, 0, err
@@ -135,7 +134,7 @@ func GetURLBody(url string) ([]byte, int, error) {
 }
 
 // ProxyData only do get request and pipe without range
-func ProxyData(w http.ResponseWriter, r *http.Request, url string) error {
+func ProxyData(w http.ResponseWriter, r *http.Request, url string, client http.Client) error {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -149,17 +148,16 @@ func ProxyData(w http.ResponseWriter, r *http.Request, url string) error {
 	}
 	defer res.Body.Close()
 	to := w.Header()
+	copyHeader(res.Header, to, exposeHeadersBasic)
 	to.Set("Cache-Control", "public, max-age=864000")
 	to.Set("Access-Control-Allow-Origin", "*")
-	copyHeader(res.Header, to, exposeHeadersBasic)
 	w.WriteHeader(res.StatusCode)
 	_, err = io.Copy(w, res.Body)
 	return err
 }
 
-// Pipe Proxy request
-func Pipe(w http.ResponseWriter, r *http.Request, url string) error {
-	client = &http.Client{Timeout: time.Minute * 10}
+// Pipe Proxy get request full featured with cache-control & range
+func Pipe(w http.ResponseWriter, r *http.Request, url string, client http.Client) error {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -191,8 +189,8 @@ func copyHeader(from http.Header, to http.Header, headers []string) http.Header 
 }
 
 // ProxyCall call api with long cache
-func ProxyCall(w http.ResponseWriter, url string) error {
-	bs, status, err := GetURLData(url)
+func ProxyCall(w http.ResponseWriter, url string, client http.Client) error {
+	bs, status, err := GetURLData(url, client)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
