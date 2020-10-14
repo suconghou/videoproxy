@@ -32,11 +32,15 @@ func MakeClient(key string, timeout time.Duration) http.Client {
 
 // MakeSocksProxy return socks proxy Transport
 func MakeSocksProxy(addr string, user string, password string) (*http.Transport, error) {
-	var auth *proxy.Auth
+	var (
+		dialer proxy.Dialer
+		err    error
+	)
 	if user != "" && password != "" {
-		auth = &proxy.Auth{User: user, Password: password}
+		dialer, err = proxy.SOCKS5("tcp", addr, &proxy.Auth{User: user, Password: password}, proxy.Direct)
+	} else {
+		dialer, err = proxy.SOCKS5("tcp", addr, nil, proxy.Direct)
 	}
-	dialer, err := proxy.SOCKS5("tcp", addr, auth, proxy.Direct)
 	if err != nil {
 		return nil, err
 	}
