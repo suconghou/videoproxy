@@ -27,7 +27,10 @@ func MakeClient(key string, timeout time.Duration) http.Client {
 			return http.Client{Timeout: timeout}
 		}
 	}
-	return http.Client{Transport: transport, Timeout: timeout}
+	if transport != nil {
+		return http.Client{Transport: transport, Timeout: timeout}
+	}
+	return http.Client{Timeout: timeout}
 }
 
 // MakeSocksProxy return socks proxy Transport

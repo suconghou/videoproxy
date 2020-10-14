@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	imageClient         http.Client
-	videoClient         http.Client
+	imageClient         = util.MakeClient("IMAGE_PROXY", time.Minute)
+	videoClient         = util.MakeClient("VIDEO_PROXY", time.Minute)
 	youtubeImageHostMap = map[string]string{
 		"jpg":  "http://i.ytimg.com/vi/",
 		"webp": "http://i.ytimg.com/vi_webp/",
@@ -31,8 +31,6 @@ type resp struct {
 }
 
 func init() {
-	imageClient = util.MakeClient("IMAGE_PROXY", time.Minute)
-	videoClient = util.MakeClient("VIDEO_PROXY", time.Minute)
 	codepass := os.Getenv("CODE_PASS")
 	if strings.Contains(codepass, ",") {
 		arr := strings.Split(codepass, ",")

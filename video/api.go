@@ -13,16 +13,12 @@ import (
 
 var (
 	key       = os.Getenv("YOUTUBE_API_KEY")
-	apiClient http.Client
+	apiClient = util.MakeClient("API_PROXY", time.Minute)
 )
 
 const (
 	baseURL = "https://www.googleapis.com/youtube/%s"
 )
-
-func init() {
-	apiClient = util.MakeClient("API_PROXY", time.Minute)
-}
 
 // Videos proxy api to get video info , ?id=.. / ?chart=mostPopular&maxResults=20
 func Videos(w http.ResponseWriter, r *http.Request, match []string) error {
