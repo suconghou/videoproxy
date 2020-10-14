@@ -112,12 +112,12 @@ func proxy(w http.ResponseWriter, r *http.Request, id string, itag string, ts st
 func AuthCode(handler func(http.ResponseWriter, *http.Request, []string) error) func(http.ResponseWriter, *http.Request, []string) error {
 	if r1 > 0 && r2 > 0 {
 		return func(w http.ResponseWriter, r *http.Request, match []string) error {
-			vid, err := util.DecodeVid(match[0], r1, r2)
+			vid, err := util.DecodeVid(match[1], r1, r2)
 			if err != nil {
 				http.Error(w, "bad request", http.StatusForbidden)
 				return err
 			}
-			match[0] = vid
+			match[1] = vid
 			return handler(w, r, match)
 		}
 	}
