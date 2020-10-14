@@ -15,10 +15,10 @@ type routeInfo struct {
 
 // Route for all route
 var Route = []routeInfo{
-	{regexp.MustCompile(`^/video/([\w\-]{6,12})\.json$`), video.GetInfo},
-	{regexp.MustCompile(`^/video/([\w\-]{6,12})/(\d{1,3})\.(mp4|webm)$`), video.ProxyOne},
-	{regexp.MustCompile(`^/video/([\w\-]{6,12})/(\d{1,3})/(\d+-\d+)\.ts$`), video.ProxyPart},
-	{regexp.MustCompile(`^/video/([\w\-]{6,12})\.(jpg|webp)$`), video.Image},
+	{regexp.MustCompile(`^/video/([\w\-]{6,15})\.json$`), video.AuthCode(video.GetInfo)},
+	{regexp.MustCompile(`^/video/([\w\-]{6,15})/(\d{1,3})\.(mp4|webm)$`), video.AuthCode(video.ProxyOne)},
+	{regexp.MustCompile(`^/video/([\w\-]{6,15})/(\d{1,3})/(\d+-\d+)\.ts$`), video.AuthCode(video.ProxyPart)},
+	{regexp.MustCompile(`^/video/([\w\-]{6,15})\.(jpg|webp)$`), video.AuthCode(video.Image)},
 
 	{regexp.MustCompile(`^/video/api/(v3/videos)$`), video.Videos},
 	{regexp.MustCompile(`^/video/api/(v3/search)$`), video.Search},

@@ -1,4 +1,4 @@
-## youtube share 
+## videoproxy
 
 youtube stream proxy 
 
@@ -69,7 +69,7 @@ GET `/video/api/v3/playlistItems`
 
 所有接口支持`callback`参数,可用于JSONP
 
-maxResults 取值返回 1-50
+maxResults 取值范围 1-50
 
 ## 环境变量
 
@@ -121,6 +121,12 @@ socks5格式: `127.0.0.1:9050`
 若都不配置,也可使用GO的代理配置,对所有请求有效
 
 `export http_proxy=http://0.0.0.0:1087;export https_proxy=http://0.0.0.0:1087;`
+
+**ID混淆**
+
+使用环境变量`CODE_PASS`开启ID混淆
+
+值为两个正整数用`,`隔开用于解码,例如 `10,20`
 
 ## run in docker
 

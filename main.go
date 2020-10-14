@@ -31,7 +31,7 @@ func routeMatch(w http.ResponseWriter, r *http.Request) {
 	for _, p := range route.Route {
 		if p.Reg.MatchString(r.URL.Path) {
 			if err := p.Handler(w, r, p.Reg.FindStringSubmatch(r.URL.Path)); err != nil {
-				util.Log.Print(err)
+				util.Log.Print(r.URL.Path, " ", err)
 			}
 			return
 		}

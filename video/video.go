@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/suconghou/videoproxy/request"
@@ -19,6 +21,8 @@ var (
 		"jpg":  "http://i.ytimg.com/vi/",
 		"webp": "http://i.ytimg.com/vi_webp/",
 	}
+	r1 int
+	r2 int
 )
 
 type resp struct {
@@ -34,6 +38,14 @@ func init() {
 	}
 	if videoproxy != "" {
 		videoClient = util.MakeClient(videoproxy, time.Minute)
+	}
+	codepass := os.Getenv("CODE_PASS")
+	if strings.Contains(codepass, ",") {
+		arr := strings.Split(codepass, ",")
+		var err error
+		if r1, err = strconv.Atoi(arr[0]); err == nil {
+			r2, _ = strconv.Atoi(arr[1])
+		}
 	}
 }
 
@@ -102,4 +114,20 @@ func proxy(w http.ResponseWriter, r *http.Request, id string, itag string, ts st
 		return request.Pipe(w, r, s.URL, videoClient)
 	}
 	return request.ProxyData(w, r, s.URL+"&range="+ts, videoClient)
+}
+
+// AuthCode decode vid if encoded
+func AuthCode(handler func(http.ResponseWriter, *http.Request, []string) error) func(http.ResponseWriter, *http.Request, []string) error {
+	if r1 > 0 && r2 > 0 {
+		return func(w http.ResponseWriter, r *http.Request, match []string) error {
+			vid, err := util.DecodeVid(match[0], r1, r2)
+			if err != nil {
+				http.Error(w, "bad request", http.StatusForbidden)
+				return err
+			}
+			match[0] = vid
+			return handler(w, r, match)
+		}
+	}
+	return handler
 }
