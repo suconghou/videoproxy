@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -11,8 +12,9 @@ import (
 )
 
 // MakeClient based proxy
-func MakeClient(conf string, timeout time.Duration) http.Client {
+func MakeClient(key string, timeout time.Duration) http.Client {
 	var (
+		conf      = os.Getenv(key)
 		transport *http.Transport
 		err       error
 	)
@@ -20,8 +22,8 @@ func MakeClient(conf string, timeout time.Duration) http.Client {
 		if transport, err = MakeHTTPProxy(conf); err != nil {
 			return http.Client{Timeout: timeout}
 		}
-	} else {
-		if transport, err = MakeSocksProxy(conf); err != nil {
+	} else if len(conf) > 1 {
+		if transport, err = MakeSocksProxy(conf, os.Getenv(key+"_USER"), os.Getenv(key+"_PASSWORD")); err != nil {
 			return http.Client{Timeout: timeout}
 		}
 	}
@@ -29,8 +31,12 @@ func MakeClient(conf string, timeout time.Duration) http.Client {
 }
 
 // MakeSocksProxy return socks proxy Transport
-func MakeSocksProxy(addr string) (*http.Transport, error) {
-	dialer, err := proxy.SOCKS5("tcp", addr, nil, proxy.Direct)
+func MakeSocksProxy(addr string, user string, password string) (*http.Transport, error) {
+	var auth *proxy.Auth
+	if user != "" && password != "" {
+		auth = &proxy.Auth{User: user, Password: password}
+	}
+	dialer, err := proxy.SOCKS5("tcp", addr, auth, proxy.Direct)
 	if err != nil {
 		return nil, err
 	}

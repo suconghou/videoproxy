@@ -117,6 +117,8 @@ http格式: `http://proxyIp:proxyPort`
 
 socks5格式: `127.0.0.1:9050`
 
+如果socks5有代理验证,配置对应环境变量的键补充`_USER` `_PASSWORD` 即可,
+如`VIDEO_PROXY_USER` `VIDEO_PROXY_PASSWORD`
 
 若都不配置,也可使用GO的代理配置,对所有请求有效
 

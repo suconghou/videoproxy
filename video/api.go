@@ -13,7 +13,7 @@ import (
 
 var (
 	key       = os.Getenv("YOUTUBE_API_KEY")
-	apiClient = http.Client{Timeout: time.Minute}
+	apiClient http.Client
 )
 
 const (
@@ -21,10 +21,7 @@ const (
 )
 
 func init() {
-	apiproxy := os.Getenv("API_PROXY")
-	if apiproxy != "" {
-		apiClient = util.MakeClient(apiproxy, time.Minute)
-	}
+	apiClient = util.MakeClient("API_PROXY", time.Minute)
 }
 
 // Videos proxy api to get video info , ?id=.. / ?chart=mostPopular&maxResults=20
