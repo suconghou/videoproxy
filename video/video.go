@@ -114,16 +114,22 @@ func ProxyAuto(w http.ResponseWriter, r *http.Request, match []string) error {
 func findItem(info *youtubevideoparser.VideoInfo, prefers string) *youtubevideoparser.StreamItem {
 	for _, itag := range strings.Split(prefers, ",") {
 		if v, ok := info.Streams[itag]; ok {
-			return v
+			if v.ContentLength != "" {
+				return v
+			}
 		}
 	}
 	for _, itag := range preferList {
 		if v, ok := info.Streams[itag]; ok {
-			return v
+			if v.ContentLength != "" {
+				return v
+			}
 		}
 	}
 	for _, v := range info.Streams {
-		return v
+		if v.ContentLength != "" {
+			return v
+		}
 	}
 	return nil
 }
