@@ -157,7 +157,7 @@ func ProxyData(w http.ResponseWriter, r *http.Request, url string, client http.C
 }
 
 // Pipe Proxy get request full featured with cache-control & range
-func Pipe(w http.ResponseWriter, r *http.Request, url string, client http.Client) error {
+func Pipe(w http.ResponseWriter, r *http.Request, url string, client http.Client, rewriteHeader func(http.Header, http.Header)) error {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -174,6 +174,9 @@ func Pipe(w http.ResponseWriter, r *http.Request, url string, client http.Client
 	copyHeader(resp.Header, to, exposeHeaders)
 	to.Set("Cache-Control", "public, max-age=864000")
 	to.Set("Access-Control-Allow-Origin", "*")
+	if rewriteHeader != nil {
+		rewriteHeader(resp.Header, to)
+	}
 	w.WriteHeader(resp.StatusCode)
 	_, err = io.Copy(w, resp.Body)
 	return err

@@ -3,6 +3,7 @@ package video
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -15,6 +16,7 @@ import (
 )
 
 var (
+	preferList          = []string{"18", "59", "22", "37", "243", "134", "244", "135", "247", "136", "248", "137", "242", "133", "278", "160"}
 	imageClient         = util.MakeClient("IMAGE_PROXY", time.Minute)
 	videoClient         = util.MakeClient("VIDEO_PROXY", time.Minute)
 	youtubeImageHostMap = map[string]string{
@@ -56,7 +58,7 @@ func Image(w http.ResponseWriter, r *http.Request, match []string) error {
 		ext = match[2]
 		url = fmt.Sprintf("%s%s/%s.%s", youtubeImageHostMap[ext], id, "mqdefault", ext)
 	)
-	return request.Pipe(w, r, url, imageClient)
+	return request.Pipe(w, r, url, imageClient, nil)
 }
 
 // GetInfo for info
@@ -76,6 +78,54 @@ func GetInfo(w http.ResponseWriter, r *http.Request, match []string) error {
 	}
 	_, err = util.JSONPut(w, info, http.StatusOK, 864000)
 	return err
+}
+
+// ProxyAuto find playable a&v stream
+func ProxyAuto(w http.ResponseWriter, r *http.Request, match []string) error {
+	var (
+		query     = r.URL.Query()
+		info, err = getinfo(match[1])
+	)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+	var s = findItem(info, query.Get("prefer"))
+	if s == nil {
+		http.NotFound(w, r)
+		return nil
+	}
+	var filename = ""
+	if query.Get("download") == "1" {
+		if strings.Contains(s.Type, "mp4") {
+			filename = fmt.Sprintf("%s.%s", info.Title, "mp4")
+		} else {
+			filename = fmt.Sprintf("%s.%s", info.Title, "webm")
+		}
+	}
+	return request.Pipe(w, r, s.URL, videoClient, func(res, to http.Header) {
+		if filename != "" {
+			name := url.PathEscape(filename)
+			to.Set("Content-Disposition", fmt.Sprintf("attachment;filename* = UTF-8''%s", name))
+		}
+	})
+}
+
+func findItem(info *youtubevideoparser.VideoInfo, prefers string) *youtubevideoparser.StreamItem {
+	for _, itag := range strings.Split(prefers, ",") {
+		if v, ok := info.Streams[itag]; ok {
+			return v
+		}
+	}
+	for _, itag := range preferList {
+		if v, ok := info.Streams[itag]; ok {
+			return v
+		}
+	}
+	for _, v := range info.Streams {
+		return v
+	}
+	return nil
 }
 
 // ProxyOne proxy whole video
@@ -103,7 +153,7 @@ func proxy(w http.ResponseWriter, r *http.Request, id string, itag string, ts st
 		return nil
 	}
 	if ts == "" {
-		return request.Pipe(w, r, s.URL, videoClient)
+		return request.Pipe(w, r, s.URL, videoClient, nil)
 	}
 	return request.ProxyData(w, r, s.URL+"&range="+ts, videoClient)
 }

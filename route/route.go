@@ -19,6 +19,7 @@ var Route = []routeInfo{
 	{regexp.MustCompile(`^/video/([\w\-]{6,15})/(\d{1,3})\.(mp4|webm)$`), video.AuthCode(video.ProxyOne)},
 	{regexp.MustCompile(`^/video/([\w\-]{6,15})/(\d{1,3})/(\d+-\d+)\.ts$`), video.AuthCode(video.ProxyPart)},
 	{regexp.MustCompile(`^/video/([\w\-]{6,15})\.(jpg|webp)$`), video.AuthCode(video.Image)},
+	{regexp.MustCompile(`^/video/([\w\-]{6,15})\.(mp4|webm)$`), video.AuthCode(video.ProxyAuto)},
 
 	{regexp.MustCompile(`^/video/api/(v3/videos)$`), video.Videos},
 	{regexp.MustCompile(`^/video/api/(v3/search)$`), video.Search},
