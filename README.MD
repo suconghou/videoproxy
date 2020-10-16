@@ -9,19 +9,27 @@ youtube stream proxy
 
 **解析接口**
 
-GET `/video/{ID}.json` 默认不输出下载地址,query参数`info=all`输出下载地址 
+GET `/video/{ID}.json` 
+
+> 默认便于缓存不输出下载地址,query参数`info=all`输出下载地址 
 
 GET `/video/{ID}/{ITAG}.mp4` `/video/{ID}/{ITAG}.webm`
 
+> proxy指定itag的资源
+
 GET `/video/{ID}/{ITAG}/{TS}.ts`
+
+> proxy指定itag的指定range片段
 
 GET `/video/{ID}.jpg` `/video/{ID}.webp`
 
-GET `/video/{ID}.mp4` `/video/{ID}.webm` 默认中等清晰度的音视频流
+> proxy资源banner图
 
-query参数`prefer`配置清晰度优先级,根据itag列表搜寻可用资源,例如`prefer=18,22`
+GET `/video/{ID}.mp4` `/video/{ID}.webm` 
 
-参数 `download=1` 开启弹出下载框
+> 默认中等清晰度的音视频流
+> query参数`prefer`配置清晰度优先级,根据itag列表搜寻可用资源,例如`prefer=18,22`
+> 参数 `download=1` 开启弹出下载框
 
 
 **6个内容接口**
