@@ -30,8 +30,8 @@ func formatDuration(t int) string {
 	return text
 }
 
-func outPutMpd(w http.ResponseWriter, r *http.Request, match []string, info *youtubevideoparser.VideoInfo) error {
-	xml, err := buildXML(r, match[1], info)
+func outPutMpd(w http.ResponseWriter, r *http.Request, info *youtubevideoparser.VideoInfo) error {
+	xml, err := buildXML(r, info)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
@@ -39,24 +39,27 @@ func outPutMpd(w http.ResponseWriter, r *http.Request, match []string, info *you
 	h := w.Header()
 	h.Set("Content-Type", "application/dash+xml")
 	h.Set("Access-Control-Allow-Origin", "*")
+	h.Set("Access-Control-Max-Age", "864000")
 	h.Set("Cache-Control", "public,max-age=864000")
 	_, err = w.Write([]byte(xml))
 	return err
 }
 
-func buildXML(r *http.Request, ID string, info *youtubevideoparser.VideoInfo) (string, error) {
+func buildXML(r *http.Request, info *youtubevideoparser.VideoInfo) (string, error) {
 	duration, err := strconv.Atoi(info.Duration)
 	if err != nil {
 		return "", err
 	}
 	var (
-		query  = r.URL.Query()
-		t      = formatDuration(duration)
-		b      = bytes.Buffer{}
-		header = fmt.Sprintf("<MPD xmlns=\"urn:mpeg:dash:schema:mpd:2011\" profiles=\"urn:mpeg:dash:profile:isoff-on-demand:2011\" minBufferTime=\"PT2S\" mediaPresentationDuration=\"%s\" type=\"static\"><Period>", t)
-		video  string
-		audio  string
+		query   = r.URL.Query()
+		t       = formatDuration(duration)
+		b       = bytes.Buffer{}
+		header  = fmt.Sprintf("<MPD xmlns=\"urn:mpeg:dash:schema:mpd:2011\" profiles=\"urn:mpeg:dash:profile:isoff-on-demand:2011\" minBufferTime=\"PT2S\" mediaPresentationDuration=\"%s\" type=\"static\"><Period>", t)
+		video   string
+		audio   string
+		patharr = strings.Split(strings.ReplaceAll(r.URL.Path, ".mpd", ""), "/")
 	)
+	var ID = patharr[len(patharr)-1]
 	audio, video, err = buildItem(info, ID, duration, query.Get("a"), query.Get("v"))
 	if err != nil {
 		return "", err

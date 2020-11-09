@@ -151,6 +151,7 @@ func ProxyData(w http.ResponseWriter, r *http.Request, url string, client http.C
 	copyHeader(res.Header, to, exposeHeadersBasic)
 	to.Set("Cache-Control", "public, max-age=864000")
 	to.Set("Access-Control-Allow-Origin", "*")
+	to.Set("Access-Control-Max-Age", "864000")
 	if rhead := r.Header.Get("Access-Control-Request-Headers"); rhead != "" {
 		to.Set("Access-Control-Allow-Headers", rhead)
 	}
@@ -177,6 +178,7 @@ func Pipe(w http.ResponseWriter, r *http.Request, url string, client http.Client
 	copyHeader(resp.Header, to, exposeHeaders)
 	to.Set("Cache-Control", "public, max-age=864000")
 	to.Set("Access-Control-Allow-Origin", "*")
+	to.Set("Access-Control-Max-Age", "864000")
 	if rhead := r.Header.Get("Access-Control-Request-Headers"); rhead != "" {
 		to.Set("Access-Control-Allow-Headers", rhead)
 	}
@@ -214,6 +216,7 @@ func ProxyCall(w http.ResponseWriter, url string, client http.Client) error {
 	}
 	h.Set("Content-Type", "application/json; charset=utf-8")
 	h.Set("Access-Control-Allow-Origin", "*")
+	h.Set("Access-Control-Max-Age", "864000")
 	h.Set("Cache-Control", "public,max-age=864000")
 	w.WriteHeader(status)
 	_, err = w.Write(bs)

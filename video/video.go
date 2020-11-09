@@ -71,7 +71,7 @@ func GetInfo(w http.ResponseWriter, r *http.Request, match []string) error {
 		return err
 	}
 	if match[2] == "mpd" {
-		return outPutMpd(w, r, match, info)
+		return outPutMpd(w, r, info)
 	}
 	// 为使接口长缓存,默认不出易失效数据
 	if r.URL.Query().Get("info") != "all" {
