@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	preferList          = []string{"18", "59", "22", "37", "243", "134", "244", "135", "247", "136", "248", "137", "242", "133", "278", "160"}
+	preferList          = "18,59,22,37,243,134,244,135,247,136,248,137,242,133,278,160"
 	imageClient         = util.MakeClient("IMAGE_PROXY", time.Minute)
 	videoClient         = util.MakeClient("VIDEO_PROXY", time.Minute)
 	youtubeImageHostMap = map[string]string{
@@ -70,6 +70,9 @@ func GetInfo(w http.ResponseWriter, r *http.Request, match []string) error {
 		util.JSONPut(w, resp{-1, err.Error()}, http.StatusInternalServerError, 1)
 		return err
 	}
+	if match[2] == "mpd" {
+		return outPutMpd(w, r, info)
+	}
 	// 为使接口长缓存,默认不出易失效数据
 	if r.URL.Query().Get("info") != "all" {
 		for _, s := range info.Streams {
@@ -112,14 +115,7 @@ func ProxyAuto(w http.ResponseWriter, r *http.Request, match []string) error {
 }
 
 func findItem(info *youtubevideoparser.VideoInfo, prefers string) *youtubevideoparser.StreamItem {
-	for _, itag := range strings.Split(prefers, ",") {
-		if v, ok := info.Streams[itag]; ok {
-			if v.ContentLength != "" {
-				return v
-			}
-		}
-	}
-	for _, itag := range preferList {
+	for _, itag := range strings.Split(prefers+","+preferList, ",") {
 		if v, ok := info.Streams[itag]; ok {
 			if v.ContentLength != "" {
 				return v
@@ -134,7 +130,7 @@ func findItem(info *youtubevideoparser.VideoInfo, prefers string) *youtubevideop
 	return nil
 }
 
-// ProxyOne proxy whole video
+// ProxyOne proxy whole video, if has range process range request for dash player
 func ProxyOne(w http.ResponseWriter, r *http.Request, match []string) error {
 	return proxy(w, r, match[1], match[2], "")
 }

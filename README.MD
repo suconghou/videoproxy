@@ -13,9 +13,20 @@ GET `/video/{ID}.json`
 
 > 默认便于缓存不输出下载地址,query参数`info=all`输出下载地址 
 
+GET `/video/{ID}.mpd`
+
+> 默认输出一条音频,一条视频;query参数配置输出的音频和视频质量
+>
+> `a`控制音频,默认低质量webm`249,250,251,600,140,599`,若要高质量webm使用`251,250,249,600,140,599`
+> 对于不支持webm的要使用mp4可写`140,599`
+>
+> `v`控制视频,默认中等质量webm`247,136,244,135,243,134,242,133,278,160`,若要超高清可以写`248,137,303,399,271`等,若要mp4,可以写`136,135,134,133,160`
+> 
+> 可参考 https://gist.github.com/AgentOak/34d47c65b1d28829bb17c24c04a0096f
+
 GET `/video/{ID}/{ITAG}.mp4` `/video/{ID}/{ITAG}.webm`
 
-> proxy指定itag的资源
+> proxy指定itag的资源,如果发起的是range请求,也支持响应range
 
 GET `/video/{ID}/{ITAG}/{TS}.ts`
 
@@ -28,7 +39,9 @@ GET `/video/{ID}.jpg` `/video/{ID}.webp`
 GET `/video/{ID}.mp4` `/video/{ID}.webm` 
 
 > 默认中等清晰度的音视频流
+>
 > query参数`prefer`配置清晰度优先级,根据itag列表搜寻可用资源,例如`prefer=18,22`
+>
 > 参数 `download=1` 开启弹出下载框
 
 
@@ -81,6 +94,10 @@ GET `/video/api/v3/playlistItems`
 > pageToken
 >
 > maxResults
+
+GET `/video/api/v3/videoCategories` 
+
+> id 
 
 所有接口支持`callback`参数,可用于JSONP
 
