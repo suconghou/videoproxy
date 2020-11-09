@@ -30,8 +30,8 @@ func formatDuration(t int) string {
 	return text
 }
 
-func outPutMpd(w http.ResponseWriter, r *http.Request, info *youtubevideoparser.VideoInfo) error {
-	xml, err := buildXML(r, info)
+func outPutMpd(w http.ResponseWriter, r *http.Request, match []string, info *youtubevideoparser.VideoInfo) error {
+	xml, err := buildXML(r, match[1], info)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
@@ -44,7 +44,7 @@ func outPutMpd(w http.ResponseWriter, r *http.Request, info *youtubevideoparser.
 	return err
 }
 
-func buildXML(r *http.Request, info *youtubevideoparser.VideoInfo) (string, error) {
+func buildXML(r *http.Request, ID string, info *youtubevideoparser.VideoInfo) (string, error) {
 	duration, err := strconv.Atoi(info.Duration)
 	if err != nil {
 		return "", err
@@ -57,7 +57,7 @@ func buildXML(r *http.Request, info *youtubevideoparser.VideoInfo) (string, erro
 		video  string
 		audio  string
 	)
-	audio, video, err = buildItem(info, duration, query.Get("a"), query.Get("v"))
+	audio, video, err = buildItem(info, ID, duration, query.Get("a"), query.Get("v"))
 	if err != nil {
 		return "", err
 	}
@@ -72,17 +72,17 @@ func buildXML(r *http.Request, info *youtubevideoparser.VideoInfo) (string, erro
 	return b.String(), nil
 }
 
-func buildItem(info *youtubevideoparser.VideoInfo, duration int, a string, v string) (string, string, error) {
+func buildItem(info *youtubevideoparser.VideoInfo, ID string, duration int, a string, v string) (string, string, error) {
 	audio := findStream(info, a+","+alist, "audio")
 	video := findStream(info, v+","+vlist, "video")
 	if audio == nil || video == nil {
 		return "", "", fmt.Errorf("failed to get video or audio")
 	}
-	astr, err := formatItem(info.ID, duration, audio)
+	astr, err := formatItem(ID, duration, audio)
 	if err != nil {
 		return "", "", err
 	}
-	vstr, err := formatItem(info.ID, duration, video)
+	vstr, err := formatItem(ID, duration, video)
 	if err != nil {
 		return "", "", err
 	}
@@ -107,7 +107,7 @@ func formatItem(ID string, duration int, item *youtubevideoparser.StreamItem) (s
 		ext = "webm"
 	}
 	var (
-		baseurl = fmt.Sprintf("/video/%s/%s.%s", ID, item.Itag, ext)
+		baseurl = fmt.Sprintf("%s/%s.%s", ID, item.Itag, ext)
 		record  = fmt.Sprintf("<Representation id=\"%s\" bandwidth=\"%d\" %s mimeType=\"%s\"><BaseURL>%s</BaseURL><SegmentBase indexRange=\"%s\"><Initialization range=\"%s\"/></SegmentBase></Representation>", item.Itag, bandwidth, codecs, mime, baseurl, indexRange, initRange)
 	)
 	return record, nil
