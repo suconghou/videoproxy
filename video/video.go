@@ -75,6 +75,7 @@ func GetInfo(w http.ResponseWriter, r *http.Request, match []string) error {
 	}
 	// 为使接口长缓存,默认不出易失效数据
 	if r.URL.Query().Get("info") != "all" {
+		info.Captions = nil
 		for _, s := range info.Streams {
 			s.URL = ""
 		}
