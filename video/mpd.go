@@ -1,7 +1,6 @@
 package video
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -53,7 +52,7 @@ func buildXML(r *http.Request, info *youtubevideoparser.VideoInfo) (string, erro
 	var (
 		query   = r.URL.Query()
 		t       = formatDuration(duration)
-		b       = bytes.Buffer{}
+		b       = strings.Builder{}
 		header  = fmt.Sprintf("<MPD xmlns=\"urn:mpeg:dash:schema:mpd:2011\" profiles=\"urn:mpeg:dash:profile:isoff-on-demand:2011\" minBufferTime=\"PT2S\" mediaPresentationDuration=\"%s\" type=\"static\"><Period>", t)
 		video   string
 		audio   string
