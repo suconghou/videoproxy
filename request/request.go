@@ -2,7 +2,6 @@ package request
 
 import (
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"sync"
@@ -129,7 +128,7 @@ func GetURLBody(url string, client http.Client) ([]byte, int, error) {
 		return nil, 0, err
 	}
 	defer resp.Body.Close()
-	bs, err := ioutil.ReadAll(resp.Body)
+	bs, err := io.ReadAll(resp.Body)
 	return bs, resp.StatusCode, err
 }
 
