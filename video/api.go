@@ -67,5 +67,5 @@ func call(w http.ResponseWriter, r *http.Request, t string, q url.Values) error 
 		q.Set("key", key)
 	}
 	var url = fmt.Sprintf(baseURL, t) + "?" + q.Encode()
-	return request.ProxyCall(w, url, apiClient)
+	return request.ProxyCall(w, url, apiClient, r.Header)
 }

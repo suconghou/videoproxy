@@ -72,10 +72,14 @@ func GetInfo(w http.ResponseWriter, r *http.Request, match []string) error {
 	}
 	if match[2] == "mpd" {
 		return outPutMpd(w, r, info)
+	} else if match[2] == "xml" {
+		return outPutTimedText(w, r, info)
 	}
 	// 为使接口长缓存,默认不出易失效数据
 	if r.URL.Query().Get("info") != "all" {
-		info.Captions = nil
+		for _, i := range info.Captions {
+			i.URL = ""
+		}
 		for _, s := range info.Streams {
 			s.URL = ""
 		}

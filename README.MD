@@ -109,10 +109,6 @@ maxResults 取值范围 1-50
 
 > data api 用到的key, data api 数据默认缓存48h
 
-`DISABLE_GZIP`
-
-> data api 默认开启gzip,若前置nginx开启gzip,可关闭此项
-
 
 命令行参数
 

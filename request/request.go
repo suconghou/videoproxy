@@ -1,18 +1,17 @@
 package request
 
 import (
+	"bytes"
+	"context"
+	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"sync"
 	"time"
-
-	"github.com/suconghou/videoproxy/util"
 )
 
 var (
-	disableGzip = os.Getenv("DISABLE_GZIP")
-	fwdHeaders  = []string{
+	fwdHeaders = []string{
 		"User-Agent",
 		"Accept",
 		"Accept-Encoding",
@@ -30,7 +29,6 @@ var (
 		"Content-Type",
 		"Content-Encoding",
 		"Date",
-		"Expires",
 		"Last-Modified",
 		"Etag",
 		"Cache-Control",
@@ -48,88 +46,122 @@ var (
 		"Content-Encoding",
 		"Date",
 	}
+	bufferPool = sync.Pool{
+		New: func() interface{} {
+			return bytes.NewBuffer(make([]byte, 32*1024))
+		},
+	}
 )
 
 type cacheItem struct {
-	data   []byte
-	status int
-	age    time.Time
+	time    time.Time
+	ctx     context.Context
+	cancel  context.CancelFunc
+	data    *bytes.Buffer
+	headers http.Header
+	status  int
+	err     error
 }
 
-type bytecache struct {
-	sync.RWMutex
-	data map[string]cacheItem
-	age  time.Duration
+// LockGeter for http cache & lock get
+type LockGeter struct {
+	time   time.Time
+	cache  time.Duration
+	caches sync.Map
 }
 
 var (
-	longCacher = &bytecache{
-		data: make(map[string]cacheItem),
-		age:  time.Hour * 48,
-	}
+	longCacher = NewLockGeter(time.Hour * 48)
 )
 
-func (by *bytecache) geturl(url string, client http.Client) ([]byte, int, error) {
-	var bs, status = by.get(url)
-	if bs != nil {
-		return bs, status, nil
+// NewLockGeter create new lockgeter
+func NewLockGeter(cache time.Duration) *LockGeter {
+	return &LockGeter{
+		time:   time.Now(),
+		cache:  cache,
+		caches: sync.Map{},
 	}
-	res, status, err := GetURLBody(url, client)
-	if err != nil {
-		return nil, status, err
-	}
-	if len(res) > 0 && status == http.StatusOK {
-		by.set(url, res, status)
-	}
-	return res, status, nil
 }
 
-func (by *bytecache) get(key string) ([]byte, int) {
-	by.RLock()
-	item := by.data[key]
-	by.RUnlock()
-	if item.age.After(time.Now()) {
-		return item.data, item.status
-	}
-	by.expire()
-	return nil, 0
-}
-
-func (by *bytecache) set(key string, data []byte, status int) {
-	by.Lock()
-	by.data[key] = cacheItem{data, status, time.Now().Add(by.age)}
-	by.Unlock()
-}
-
-func (by *bytecache) expire() {
-	t := time.Now()
-	by.Lock()
-	for key, item := range by.data {
-		if item.age.Before(t) {
-			delete(by.data, key)
+func (l *LockGeter) Get(url string, client http.Client, reqHeaders http.Header) ([]byte, http.Header, int, error) {
+	var now = time.Now()
+	l.clean()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	t, loaded := l.caches.LoadOrStore(url, &cacheItem{
+		time:   now,
+		ctx:    ctx,
+		cancel: cancel,
+		err:    fmt.Errorf("timeout"),
+	})
+	v := t.(*cacheItem)
+	if loaded {
+		<-v.ctx.Done()
+		if v.data == nil {
+			return nil, v.headers, v.status, v.err
 		}
+		return v.data.Bytes(), v.headers, v.status, v.err
 	}
-	by.Unlock()
+	data, headers, status, err := Get(url, client, reqHeaders)
+	v.data = data
+	v.headers = headers
+	v.status = status
+	v.err = err
+	cancel()
+	if data == nil {
+		return nil, headers, status, err
+	}
+	return data.Bytes(), headers, status, err
 }
 
-// GetURLData check cache and get from url
-func GetURLData(url string, client http.Client) ([]byte, int, error) {
-	return longCacher.geturl(url, client)
+func (l *LockGeter) clean() {
+	var now = time.Now()
+	if now.Sub(l.time) < time.Second*5 {
+		return
+	}
+	l.caches.Range(func(key, value interface{}) bool {
+		var v = value.(*cacheItem)
+		if now.Sub(v.time) > l.cache {
+			v.cancel()
+			if v.data != nil {
+				bufferPool.Put(v.data)
+			}
+			l.caches.Delete(key)
+		}
+		return true
+	})
+	l.time = now
 }
 
-// GetURLBody run quick get no cache
-func GetURLBody(url string, client http.Client) ([]byte, int, error) {
+// GetByCacher check cache and get from url
+func GetByCacher(url string, client http.Client, reqHeaders http.Header) ([]byte, http.Header, int, error) {
+	return longCacher.Get(url, client, reqHeaders)
+}
+
+// Get http data, the return value should be readonly
+func Get(url string, client http.Client, reqHeaders http.Header) (*bytes.Buffer, http.Header, int, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return nil, 0, err
+		return nil, nil, 0, err
 	}
+	req.Header = reqHeaders
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, 0, err
+		return nil, nil, 0, err
 	}
 	defer resp.Body.Close()
-	bs, err := io.ReadAll(resp.Body)
-	return bs, resp.StatusCode, err
+	if resp.StatusCode != http.StatusOK {
+		return nil, resp.Header, resp.StatusCode, fmt.Errorf("%s : %s", url, resp.Status)
+	}
+	var (
+		buffer = bufferPool.Get().(*bytes.Buffer)
+	)
+	buffer.Reset()
+	_, err = buffer.ReadFrom(resp.Body)
+	if err != nil {
+		bufferPool.Put(buffer)
+		return nil, resp.Header, resp.StatusCode, err
+	}
+	return buffer, resp.Header, resp.StatusCode, nil
 }
 
 // ProxyData only do get request and pipe without range
@@ -148,11 +180,13 @@ func ProxyData(w http.ResponseWriter, r *http.Request, url string, client http.C
 	defer res.Body.Close()
 	to := w.Header()
 	copyHeader(res.Header, to, exposeHeadersBasic)
-	to.Set("Cache-Control", "public, max-age=864000")
 	to.Set("Access-Control-Allow-Origin", "*")
 	to.Set("Access-Control-Max-Age", "864000")
 	if rhead := r.Header.Get("Access-Control-Request-Headers"); rhead != "" {
 		to.Set("Access-Control-Allow-Headers", rhead)
+	}
+	if res.StatusCode == http.StatusOK || res.StatusCode == http.StatusPartialContent {
+		to.Set("Cache-Control", "public, max-age=864000")
 	}
 	w.WriteHeader(res.StatusCode)
 	_, err = io.Copy(w, res.Body)
@@ -175,11 +209,13 @@ func Pipe(w http.ResponseWriter, r *http.Request, url string, client http.Client
 	defer resp.Body.Close()
 	to := w.Header()
 	copyHeader(resp.Header, to, exposeHeaders)
-	to.Set("Cache-Control", "public, max-age=864000")
 	to.Set("Access-Control-Allow-Origin", "*")
 	to.Set("Access-Control-Max-Age", "864000")
 	if rhead := r.Header.Get("Access-Control-Request-Headers"); rhead != "" {
 		to.Set("Access-Control-Allow-Headers", rhead)
+	}
+	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusPartialContent || resp.StatusCode == http.StatusNotModified {
+		to.Set("Cache-Control", "public, max-age=864000")
 	}
 	if rewriteHeader != nil {
 		rewriteHeader(resp.Header, to)
@@ -199,37 +235,22 @@ func copyHeader(from http.Header, to http.Header, headers []string) http.Header 
 }
 
 // ProxyCall call api with long cache
-func ProxyCall(w http.ResponseWriter, url string, client http.Client) error {
-	bs, status, err := GetURLData(url, client)
+func ProxyCall(w http.ResponseWriter, url string, client http.Client, rh http.Header) error {
+	bs, outHeaders, status, err := GetByCacher(url, client, copyHeader(rh, http.Header{}, fwdHeadersBasic))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
 	var (
-		h      = w.Header()
-		gziped bool
+		h = w.Header()
 	)
-	bs, gziped = gzipResponse(bs)
-	if gziped {
-		h.Set("Content-Encoding", "gzip")
-	}
-	h.Set("Content-Type", "application/json; charset=utf-8")
+	copyHeader(outHeaders, h, exposeHeadersBasic)
 	h.Set("Access-Control-Allow-Origin", "*")
 	h.Set("Access-Control-Max-Age", "864000")
-	h.Set("Cache-Control", "public,max-age=864000")
+	if status == http.StatusOK {
+		h.Set("Cache-Control", "public,max-age=864000")
+	}
 	w.WriteHeader(status)
 	_, err = w.Write(bs)
 	return err
-}
-
-func gzipResponse(bs []byte) ([]byte, bool) {
-	if disableGzip != "" || len(bs) < 512 {
-		return bs, false
-	}
-	gz, err := util.GzipEncode(bs)
-	if err == nil {
-		return gz, true
-	}
-	util.Log.Println("gz error", err)
-	return bs, false
 }
