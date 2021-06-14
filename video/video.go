@@ -240,7 +240,7 @@ func AuthCode(handler func(http.ResponseWriter, *http.Request, []string) error) 
 				return err
 			}
 			if !cache.InWhiteList(vid) {
-				http.NotFound(w, r)
+				http.Error(w, "", http.StatusNoContent)
 				return nil
 			}
 			match[1] = vid
@@ -249,7 +249,7 @@ func AuthCode(handler func(http.ResponseWriter, *http.Request, []string) error) 
 	}
 	return func(w http.ResponseWriter, r *http.Request, match []string) error {
 		if !cache.InWhiteList(match[1]) {
-			http.NotFound(w, r)
+			http.Error(w, "", http.StatusNoContent)
 			return nil
 		}
 		return handler(w, r, match)

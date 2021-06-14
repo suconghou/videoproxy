@@ -169,6 +169,14 @@ socks5格式: `127.0.0.1:9050`
 
 `export DB_AUTH="work:123456" DB_ADDR="127.0.0.1:3306" DB_NAME="test"`
 
+如果不配置数据库信息,可以配置上游白名单 `BASE_URL` 
+
+`BASE_URL=http://domain1/video;http://domain2/video`
+
+验证白名单时向上游发出请求,验证白名单;
+
+如果此`BASE_URL`也不配置,则默认全部放行
+
 数据表
 
 本系统使用4张数据表
@@ -180,6 +188,8 @@ socks5格式: `127.0.0.1:9050`
 > cachempd mpd信息缓存表
 
 > cachejson 播放信息缓存表
+
+
 
 
 ## run in docker
