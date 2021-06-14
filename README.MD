@@ -158,6 +158,30 @@ socks5格式: `127.0.0.1:9050`
 
 值为两个正整数用`,`隔开用于解码,例如 `10,20`
 
+
+## 数据库与缓存
+
+> DB_AUTH 账户和密码
+
+> DB_ADDR 数据库地址
+
+> DB_NAME 要使用的数据库
+
+`export DB_AUTH="work:123456" DB_ADDR="127.0.0.1:3306" DB_NAME="test"`
+
+数据表
+
+本系统使用4张数据表
+
+> whitelist 白名单
+
+> captions 字幕缓存表
+
+> cachempd mpd信息缓存表
+
+> cachejson 播放信息缓存表
+
+
 ## run in docker
 
 ```

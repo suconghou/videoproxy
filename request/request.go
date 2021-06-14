@@ -235,15 +235,13 @@ func copyHeader(from http.Header, to http.Header, headers []string) http.Header 
 }
 
 // ProxyCall call api with long cache
-func ProxyCall(w http.ResponseWriter, url string, client http.Client, rh http.Header) error {
+func ProxyCall(w http.ResponseWriter, url string, client http.Client, rh http.Header, hook func([]byte, int)) error {
 	bs, outHeaders, status, err := GetByCacher(url, client, copyHeader(rh, http.Header{}, fwdHeadersBasic))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
-	var (
-		h = w.Header()
-	)
+	var h = w.Header()
 	copyHeader(outHeaders, h, exposeHeadersBasic)
 	h.Set("Access-Control-Allow-Origin", "*")
 	h.Set("Access-Control-Max-Age", "864000")
@@ -252,5 +250,8 @@ func ProxyCall(w http.ResponseWriter, url string, client http.Client, rh http.He
 	}
 	w.WriteHeader(status)
 	_, err = w.Write(bs)
+	if hook != nil {
+		hook(bs, status)
+	}
 	return err
 }

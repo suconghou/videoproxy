@@ -1,6 +1,7 @@
 package video
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -9,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/suconghou/videoproxy/cache"
+	"github.com/suconghou/videoproxy/db"
 	"github.com/suconghou/videoproxy/request"
 	"github.com/suconghou/videoproxy/util"
 
@@ -64,19 +67,29 @@ func Image(w http.ResponseWriter, r *http.Request, match []string) error {
 // GetInfo for info
 func GetInfo(w http.ResponseWriter, r *http.Request, match []string) error {
 	var (
-		info, err = getinfo(match[1])
+		vid    = match[1]
+		ext    = match[2]
+		detail = r.URL.Query().Get("info") == "all"
+	)
+	if ext != "json" || !detail {
+		if useCache(vid, ext, w, r) {
+			return nil
+		}
+	}
+	var (
+		info, err = getinfo(vid)
 	)
 	if err != nil {
 		util.JSONPut(w, resp{-1, err.Error()}, http.StatusInternalServerError, 1)
 		return err
 	}
-	if match[2] == "mpd" {
+	if ext == "mpd" {
 		return outPutMpd(w, r, info)
-	} else if match[2] == "xml" {
+	} else if ext == "xml" {
 		return outPutTimedText(w, r, info)
 	}
 	// 为使接口长缓存,默认不出易失效数据
-	if r.URL.Query().Get("info") != "all" {
+	if !detail {
 		for _, i := range info.Captions {
 			i.URL = ""
 		}
@@ -85,7 +98,59 @@ func GetInfo(w http.ResponseWriter, r *http.Request, match []string) error {
 		}
 	}
 	_, err = util.JSONPut(w, info, http.StatusOK, 864000)
+	if !detail {
+		bs, er := json.Marshal(info)
+		if er == nil {
+			if e := db.SaveCacheItem(info.ID, string(bs), db.TABLE_CACHEJSON); e != nil {
+				util.Log.Print(er)
+			}
+		} else {
+			util.Log.Print(er)
+		}
+	}
 	return err
+}
+
+func useCache(vid string, ext string, w http.ResponseWriter, r *http.Request) bool {
+	var (
+		h    = w.Header()
+		mime = map[string]string{
+			"mpd":  "application/dash+xml",
+			"xml":  "text/xml",
+			"json": "application/json",
+		}
+		data  string
+		exist bool
+		err   error
+	)
+	if ext == "mpd" {
+		data, exist, err = db.GetCacheItem(vid, db.TABLE_CACHEMPD)
+	} else if ext == "json" {
+		data, exist, err = db.GetCacheItem(vid, db.TABLE_CACHEJSON)
+	} else if ext == "xml" {
+		var lang = r.URL.Query().Get("lang")
+		if lang == "" { // 自动选择语言时不走缓存
+			return false
+		}
+		data, exist, err = db.FindCaption(vid, lang)
+	} else {
+		return false
+	}
+	if err != nil {
+		util.Log.Print(err)
+	}
+	if !exist {
+		return false
+	}
+	h.Set("Content-Type", mime[ext])
+	h.Set("Access-Control-Allow-Origin", "*")
+	h.Set("Access-Control-Max-Age", "864000")
+	h.Set("Cache-Control", "public,max-age=864000")
+	_, err = w.Write([]byte(data))
+	if err != nil {
+		util.Log.Print(err)
+	}
+	return true
 }
 
 // ProxyAuto find playable a&v stream
@@ -174,9 +239,19 @@ func AuthCode(handler func(http.ResponseWriter, *http.Request, []string) error) 
 				http.Error(w, "bad request", http.StatusForbidden)
 				return err
 			}
+			if !cache.InWhiteList(vid) {
+				http.NotFound(w, r)
+				return nil
+			}
 			match[1] = vid
 			return handler(w, r, match)
 		}
 	}
-	return handler
+	return func(w http.ResponseWriter, r *http.Request, match []string) error {
+		if !cache.InWhiteList(match[1]) {
+			http.NotFound(w, r)
+			return nil
+		}
+		return handler(w, r, match)
+	}
 }

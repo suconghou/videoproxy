@@ -12,7 +12,7 @@ import (
 
 var (
 	// Log print to stdout
-	Log = log.New(os.Stdout, "", 0)
+	Log = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
 	t   = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-_"
 )
 

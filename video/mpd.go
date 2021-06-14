@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/suconghou/videoproxy/db"
+	"github.com/suconghou/videoproxy/util"
 	"github.com/suconghou/youtubevideoparser"
 )
 
@@ -41,6 +43,9 @@ func outPutMpd(w http.ResponseWriter, r *http.Request, info *youtubevideoparser.
 	h.Set("Access-Control-Max-Age", "864000")
 	h.Set("Cache-Control", "public,max-age=864000")
 	_, err = w.Write([]byte(xml))
+	if er := db.SaveCacheItem(info.ID, xml, db.TABLE_CACHEMPD); er != nil {
+		util.Log.Print(er)
+	}
 	return err
 }
 
