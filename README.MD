@@ -13,6 +13,10 @@ GET `/video/{ID}.json`
 
 > 默认便于缓存不输出下载地址,query参数`info=all`输出下载地址 
 
+GET `/video/{ID}.xml`
+
+> 获取字幕, query参数`lang`,可以获取指定语言的字幕,哪些语言可用可以从json接口中取到
+
 GET `/video/{ID}.mpd`
 
 > 默认输出一条音频,一条视频;query参数配置输出的音频和视频质量

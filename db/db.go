@@ -81,7 +81,7 @@ func allowVideo(vid string) bool {
 		var target = fmt.Sprintf("%s/%s.json", part, vid)
 		status, err = httpStatus(target)
 		if err != nil {
-			util.Log.Print(err)
+			util.Log.Printf("%s %v", vid, err)
 			continue
 		}
 		if status == http.StatusNoContent {
