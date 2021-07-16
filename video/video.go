@@ -119,9 +119,10 @@ func useCache(vid string, ext string, w http.ResponseWriter, r *http.Request) bo
 			"xml":  "text/xml",
 			"json": "application/json",
 		}
-		data  string
-		exist bool
-		err   error
+		data   string
+		exist  bool
+		err    error
+		gziped bool
 	)
 	if ext == "mpd" {
 		data, exist, err = db.GetCacheItem(vid, db.TABLE_CACHEMPD)
@@ -133,6 +134,11 @@ func useCache(vid string, ext string, w http.ResponseWriter, r *http.Request) bo
 			return false
 		}
 		data, exist, err = db.FindCaption(vid, lang)
+		if err == nil && exist {
+			if strings.Contains(http.DetectContentType([]byte(data)), "gzip") {
+				gziped = true
+			}
+		}
 	} else {
 		return false
 	}
@@ -141,6 +147,9 @@ func useCache(vid string, ext string, w http.ResponseWriter, r *http.Request) bo
 	}
 	if !exist {
 		return false
+	}
+	if gziped {
+		h.Set("Content-Encoding", "gzip")
 	}
 	h.Set("Content-Type", mime[ext])
 	h.Set("Access-Control-Allow-Origin", "*")

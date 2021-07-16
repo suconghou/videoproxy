@@ -29,7 +29,7 @@ func outPutTimedText(w http.ResponseWriter, r *http.Request, info *youtubevideop
 	}
 	var hook = func(data []byte, status int) {
 		if status == http.StatusOK {
-			if err := db.SaveCaption(info.ID, useLang, string(data)); err != nil {
+			if err := db.SaveCaption(info.ID, useLang, data); err != nil {
 				util.Log.Print(err)
 			}
 		}

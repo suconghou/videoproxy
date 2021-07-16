@@ -9,12 +9,13 @@ import (
 	"strings"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/suconghou/videoproxy/util"
 )
 
 var (
 	db      *sql.DB
-	dsn     = fmt.Sprintf("%s@tcp(%s)/%s?charset=utf8&timeout=2s", os.Getenv("DB_AUTH"), os.Getenv("DB_ADDR"), os.Getenv("DB_NAME"))
+	dsn     = fmt.Sprintf("%s@tcp(%s)/%s?charset=utf8mb4&timeout=2s", os.Getenv("DB_AUTH"), os.Getenv("DB_ADDR"), os.Getenv("DB_NAME"))
 	baseURL = os.Getenv("BASE_URL") // http://domain/video
 	client  = &http.Client{
 		Timeout: time.Minute,
@@ -126,7 +127,7 @@ func FindCaption(id string, lang string) (string, bool, error) {
 	}
 }
 
-func SaveCaption(id string, lang string, data string) error {
+func SaveCaption(id string, lang string, data []byte) error {
 	if db == nil {
 		return nil
 	}
