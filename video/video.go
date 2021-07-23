@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	preferList          = "18,59,22,37,243,134,244,135,247,136,248,137,242,133,278,160"
+	preferList          = "18,59,22,37,243,134,396,244,135,397,247,136,302,398,248,137,242,133,395,278,598,160,597"
 	imageClient         = util.MakeClient("IMAGE_PROXY", time.Minute)
 	videoClient         = util.MakeClient("VIDEO_PROXY", time.Minute)
 	youtubeImageHostMap = map[string]string{
