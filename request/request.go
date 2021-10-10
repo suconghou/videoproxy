@@ -28,7 +28,6 @@ var (
 		"Content-Length",
 		"Content-Type",
 		"Content-Encoding",
-		"Date",
 		"Last-Modified",
 		"Etag",
 		"Cache-Control",
@@ -44,7 +43,6 @@ var (
 		"Content-Length",
 		"Content-Type",
 		"Content-Encoding",
-		"Date",
 	}
 	bufferPool = sync.Pool{
 		New: func() interface{} {
