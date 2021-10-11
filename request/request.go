@@ -83,7 +83,7 @@ func NewLockGeter(cache time.Duration) *LockGeter {
 
 func (l *LockGeter) Get(url string, client http.Client, reqHeaders http.Header) ([]byte, http.Header, int, error) {
 	var now = time.Now()
-	l.clean()
+	l.clean(now)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	t, loaded := l.caches.LoadOrStore(url, &cacheItem{
 		time:   now,
@@ -111,8 +111,7 @@ func (l *LockGeter) Get(url string, client http.Client, reqHeaders http.Header) 
 	return data.Bytes(), headers, status, err
 }
 
-func (l *LockGeter) clean() {
-	var now = time.Now()
+func (l *LockGeter) clean(now time.Time) {
 	if now.Sub(l.time) < time.Second*5 {
 		return
 	}
