@@ -47,11 +47,7 @@ func init() {
 }
 
 func getinfo(id string) (*youtubevideoparser.VideoInfo, error) {
-	parser, err := youtubevideoparser.NewParser(id, videoClient)
-	if err != nil {
-		return nil, err
-	}
-	return parser.Parse()
+	return youtubevideoparser.Parse(id, videoClient)
 }
 
 // Image proxy yputube image , default/mqdefault/hqdefault/sddefault/maxresdefault
