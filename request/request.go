@@ -3,6 +3,7 @@ package request
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -49,6 +50,7 @@ var (
 			return bytes.NewBuffer(make([]byte, 32*1024))
 		},
 	}
+	errTimeout = errors.New("timeout")
 )
 
 type cacheItem struct {
@@ -89,7 +91,7 @@ func (l *LockGeter) Get(url string, client http.Client, reqHeaders http.Header) 
 		time:   now,
 		ctx:    ctx,
 		cancel: cancel,
-		err:    fmt.Errorf("timeout"),
+		err:    errTimeout,
 	})
 	v := t.(*cacheItem)
 	if loaded {
