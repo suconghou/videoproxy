@@ -17,7 +17,7 @@ func outPutTimedText(w http.ResponseWriter, r *http.Request, info *youtubevideop
 		url     = ""
 	)
 	for _, item := range info.Captions {
-		useLang = item.LanguageCode
+		useLang = item.Language
 		url = item.URL
 		if lang == "" || useLang == lang {
 			break
