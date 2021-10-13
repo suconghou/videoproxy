@@ -199,13 +199,13 @@ func ProxyAuto(w http.ResponseWriter, r *http.Request, match []string) error {
 func findItem(info *youtubevideoparser.VideoInfo, prefers string) *youtubevideoparser.StreamItem {
 	for _, itag := range strings.Split(prefers+","+preferList, ",") {
 		if v, ok := info.Streams[itag]; ok {
-			if v.ContentLength != "" {
+			if v.URL != "" {
 				return v
 			}
 		}
 	}
 	for _, v := range info.Streams {
-		if v.ContentLength != "" {
+		if v.URL != "" {
 			return v
 		}
 	}
