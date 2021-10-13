@@ -65,16 +65,14 @@ func GetInfo(w http.ResponseWriter, r *http.Request, match []string) error {
 	var (
 		vid    = match[1]
 		ext    = match[2]
-		detail = r.URL.Query().Get("info") == "all"
+		detail = ext == "json" && r.URL.Query().Get("info") == "all"
 	)
-	if ext != "json" || !detail {
+	if !detail {
 		if useCache(vid, ext, w, r) {
 			return nil
 		}
 	}
-	var (
-		info, err = getinfo(vid)
-	)
+	var info, err = getinfo(vid)
 	if err != nil {
 		util.JSONPut(w, resp{-1, err.Error()}, http.StatusInternalServerError, 1)
 		return err
@@ -83,28 +81,18 @@ func GetInfo(w http.ResponseWriter, r *http.Request, match []string) error {
 		return outPutMpd(w, r, info)
 	} else if ext == "xml" {
 		return outPutTimedText(w, r, info)
+	} else if detail {
+		_, err = util.JSONPut(w, info, http.StatusOK, 864000)
+		return err
 	}
-	// 为使接口长缓存,默认不出易失效数据
-	if !detail {
-		for _, i := range info.Captions {
-			i.URL = ""
-		}
-		for _, s := range info.Streams {
-			s.URL = ""
-		}
+	// 非详细信息,我们deep clone一份,修改后存储数据库,并响应http
+	bs, err := copyclean(info)
+	if err != nil {
+		util.JSONPut(w, resp{-1, err.Error()}, http.StatusInternalServerError, 1)
+		return err
 	}
-	_, err = util.JSONPut(w, info, http.StatusOK, 864000)
-	if !detail {
-		bs, er := json.Marshal(info)
-		if er == nil {
-			if e := db.SaveCacheItem(info.ID, string(bs), db.TABLE_CACHEJSON); e != nil {
-				util.Log.Print(er)
-			}
-		} else {
-			util.Log.Print(er)
-		}
-	}
-	return err
+	util.JSONPut(w, bs, http.StatusOK, 864000)
+	return db.SaveCacheItem(info.ID, string(bs), db.TABLE_CACHEJSON)
 }
 
 func useCache(vid string, ext string, w http.ResponseWriter, r *http.Request) bool {
@@ -156,6 +144,25 @@ func useCache(vid string, ext string, w http.ResponseWriter, r *http.Request) bo
 		util.Log.Print(err)
 	}
 	return true
+}
+
+// deep clone此对象,然后修改(去除易失效的URL字段),然后转为json字符串
+func copyclean(info *youtubevideoparser.VideoInfo) ([]byte, error) {
+	bs, err := json.Marshal(info)
+	if err != nil {
+		return nil, err
+	}
+	var v youtubevideoparser.VideoInfo
+	if err = json.Unmarshal(bs, &v); err != nil {
+		return nil, err
+	}
+	for _, i := range v.Captions {
+		i.URL = ""
+	}
+	for _, s := range v.Streams {
+		s.URL = ""
+	}
+	return json.Marshal(v)
 }
 
 // ProxyAuto find playable a&v stream

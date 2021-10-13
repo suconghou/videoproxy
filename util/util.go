@@ -16,11 +16,18 @@ var (
 	t   = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-_"
 )
 
-// JSONPut resp json
+// JSONPut resp json,如果v是byte类型,我们应直接使用,byte类型再json.Marshal就是base64字符串了,string类型经json.Marshal后转为对于的byte
 func JSONPut(w http.ResponseWriter, v interface{}, status int, age int) (int, error) {
-	bs, err := json.Marshal(v)
-	if err != nil {
-		return 0, err
+	var (
+		bs  []byte
+		err error
+	)
+	if bb, ok := v.([]byte); !ok {
+		if bs, err = json.Marshal(v); err != nil {
+			return 0, err
+		}
+	} else {
+		bs = bb
 	}
 	h := w.Header()
 	h.Set("Content-Type", "application/json; charset=utf-8")
