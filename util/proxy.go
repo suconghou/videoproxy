@@ -47,7 +47,13 @@ func MakeSocksProxy(addr string, user string, password string) (*http.Transport,
 	if err != nil {
 		return nil, err
 	}
-	return &http.Transport{Dial: dialer.Dial, TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}, nil
+	return &http.Transport{
+		Dial:                  dialer.Dial,
+		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+		ForceAttemptHTTP2:     true,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}, nil
 }
 
 // MakeHTTPProxy return http proxy Transport
@@ -56,5 +62,11 @@ func MakeHTTPProxy(addr string) (*http.Transport, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &http.Transport{Proxy: http.ProxyURL(urlproxy), TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}, nil
+	return &http.Transport{
+		Proxy:                 http.ProxyURL(urlproxy),
+		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+		ForceAttemptHTTP2:     true,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}, nil
 }
