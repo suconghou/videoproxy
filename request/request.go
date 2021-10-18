@@ -151,9 +151,7 @@ func Get(url string, client http.Client, reqHeaders http.Header) (*bytes.Buffer,
 	if resp.StatusCode != http.StatusOK {
 		return nil, resp.Header, resp.StatusCode, fmt.Errorf("%s : %s", url, resp.Status)
 	}
-	var (
-		buffer = bufferPool.Get().(*bytes.Buffer)
-	)
+	var buffer = bufferPool.Get().(*bytes.Buffer)
 	buffer.Reset()
 	_, err = buffer.ReadFrom(resp.Body)
 	if err != nil {
