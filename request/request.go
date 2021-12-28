@@ -165,7 +165,7 @@ func Get(url string, client http.Client, reqHeaders http.Header) (*bytes.Buffer,
 
 // ProxyData only do get request and pipe without range
 func ProxyData(w http.ResponseWriter, r *http.Request, url string, client http.Client) error {
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, url, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
@@ -194,7 +194,7 @@ func ProxyData(w http.ResponseWriter, r *http.Request, url string, client http.C
 
 // Pipe Proxy get request full featured with cache-control & range
 func Pipe(w http.ResponseWriter, r *http.Request, url string, client http.Client, rewriteHeader func(http.Header, http.Header)) error {
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, url, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
