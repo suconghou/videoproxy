@@ -54,48 +54,49 @@ var (
 )
 
 type cacheItem struct {
-	time    time.Time
+	time    int64
 	ctx     context.Context
 	cancel  context.CancelFunc
 	data    *bytes.Buffer
 	headers http.Header
 	status  int
 	err     error
+	loading bool
 }
 
 // LockGeter for http cache & lock get
 type LockGeter struct {
-	time   time.Time
-	cache  time.Duration
+	time   int64
 	caches sync.Map
 }
 
 var (
-	longCacher = NewLockGeter(time.Hour * 48)
+	HttpProvider = NewLockGeter()
 )
 
 // NewLockGeter create new lockgeter
-func NewLockGeter(cache time.Duration) *LockGeter {
+func NewLockGeter() *LockGeter {
 	return &LockGeter{
-		time:   time.Now(),
-		cache:  cache,
+		time:   0,
 		caches: sync.Map{},
 	}
 }
 
-func (l *LockGeter) Get(url string, client http.Client, reqHeaders http.Header) ([]byte, http.Header, int, error) {
-	var now = time.Now()
+func (l *LockGeter) Get(url string, client http.Client, reqHeaders http.Header, ttl int64) ([]byte, http.Header, int, error) {
+	var now = time.Now().Unix()
 	l.clean(now)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	t, loaded := l.caches.LoadOrStore(url, &cacheItem{
-		time:   now,
-		ctx:    ctx,
-		cancel: cancel,
-		err:    errTimeout,
+		time:    now + ttl,
+		ctx:     ctx,
+		cancel:  cancel,
+		err:     errTimeout,
+		loading: true,
 	})
 	v := t.(*cacheItem)
 	if loaded {
 		<-v.ctx.Done()
+		v.loading = false
 		if v.data == nil {
 			return nil, v.headers, v.status, v.err
 		}
@@ -106,6 +107,7 @@ func (l *LockGeter) Get(url string, client http.Client, reqHeaders http.Header) 
 	v.headers = headers
 	v.status = status
 	v.err = err
+	v.loading = false
 	cancel()
 	if data == nil {
 		return nil, headers, status, err
@@ -113,14 +115,14 @@ func (l *LockGeter) Get(url string, client http.Client, reqHeaders http.Header) 
 	return data.Bytes(), headers, status, err
 }
 
-func (l *LockGeter) clean(now time.Time) {
-	if now.Sub(l.time) < time.Second*5 {
+func (l *LockGeter) clean(now int64) {
+	if now-l.time < 5 {
 		return
 	}
 	l.time = now
 	l.caches.Range(func(key, value interface{}) bool {
 		var v = value.(*cacheItem)
-		if now.Sub(v.time) > l.cache {
+		if v.time < now && !v.loading {
 			v.cancel()
 			if v.data != nil {
 				v.data.Reset()
@@ -134,7 +136,7 @@ func (l *LockGeter) clean(now time.Time) {
 
 // GetByCacher check cache and get from url
 func GetByCacher(url string, client http.Client, reqHeaders http.Header) ([]byte, http.Header, int, error) {
-	return longCacher.Get(url, client, reqHeaders)
+	return HttpProvider.Get(url, client, reqHeaders, 86400)
 }
 
 // Get http data, the return value should be readonly
