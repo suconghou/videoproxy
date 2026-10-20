@@ -41,6 +41,10 @@ func init() {
 		if err != nil {
 			util.Log.Fatal(err)
 		}
+		db.SetMaxOpenConns(5)
+		db.SetMaxIdleConns(2)
+		db.SetConnMaxLifetime(30 * time.Minute)
+		db.SetConnMaxIdleTime(5 * time.Minute)
 	}
 }
 
@@ -92,10 +96,7 @@ func allowVideo(vid string) bool {
 			return true
 		}
 	}
-	if status == http.StatusInternalServerError {
-		return true
-	}
-	return false
+	return status == http.StatusInternalServerError
 }
 
 func httpStatus(target string) (int, error) {
@@ -107,7 +108,7 @@ func httpStatus(target string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	res.Body.Close()
+	_ = res.Body.Close()
 	return res.StatusCode, nil
 }
 

@@ -1,6 +1,7 @@
 package util
 
 import (
+	"context"
 	"crypto/tls"
 	"net"
 	"net/http"
@@ -62,7 +63,12 @@ func MakeSocksProxy(addr string, user string, password string) (*http.Transport,
 		return nil, err
 	}
 	return &http.Transport{
-		Dial:                  dialer.Dial,
+		DialContext: func(ctx context.Context, network string, addr string) (net.Conn, error) {
+			if d, ok := dialer.(proxy.ContextDialer); ok {
+				return d.DialContext(ctx, network, addr)
+			}
+			return dialer.Dial(network, addr)
+		},
 		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
 		ForceAttemptHTTP2:     true,
 		TLSHandshakeTimeout:   10 * time.Second,

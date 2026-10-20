@@ -17,7 +17,7 @@ var (
 )
 
 // JSONPut resp json,如果v是byte类型,我们应直接使用,byte类型再json.Marshal就是base64字符串了,string类型经json.Marshal后转为对于的byte
-func JSONPut(w http.ResponseWriter, v interface{}, status int, age int) (int, error) {
+func JSONPut(w http.ResponseWriter, v any, status int, age int) (int, error) {
 	var (
 		bs  []byte
 		err error
@@ -76,7 +76,7 @@ func DecodeVid(str string, r1 int, r2 int) (string, error) {
 		t1[i], t1[l-1-i] = t1[l-1-i], t1[i]
 	}
 	var mapping = map[byte]byte{}
-	for i := 0; i < l; i++ {
+	for i := range l {
 		mapping[t1[i]] = base[i]
 	}
 	var e = []byte{}

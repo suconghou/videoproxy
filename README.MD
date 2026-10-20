@@ -73,7 +73,9 @@ GET `/video/api/v3/search`
 >
 > maxResults
 >
-> relatedToVideoId
+> videoCategoryId
+>
+> videoDuration
 >
 > regionCode
 

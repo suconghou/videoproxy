@@ -74,7 +74,7 @@ func GetInfo(w http.ResponseWriter, r *http.Request, match []string) error {
 	}
 	var info, err = getinfo(vid)
 	if err != nil {
-		util.JSONPut(w, resp{-1, err.Error()}, http.StatusInternalServerError, 1)
+		_, _ = util.JSONPut(w, resp{-1, err.Error()}, http.StatusInternalServerError, 1)
 		return err
 	}
 	if ext == "mpd" {
@@ -88,10 +88,10 @@ func GetInfo(w http.ResponseWriter, r *http.Request, match []string) error {
 	// 非详细信息,我们deep clone一份,修改后存储数据库,并响应http
 	bs, err := copyclean(info)
 	if err != nil {
-		util.JSONPut(w, resp{-1, err.Error()}, http.StatusInternalServerError, 1)
+		_, _ = util.JSONPut(w, resp{-1, err.Error()}, http.StatusInternalServerError, 1)
 		return err
 	}
-	util.JSONPut(w, bs, http.StatusOK, 864000)
+	_, _ = util.JSONPut(w, bs, http.StatusOK, 864000)
 	return db.SaveCacheItem(info.ID, string(bs), db.TABLE_CACHEJSON)
 }
 
@@ -108,11 +108,12 @@ func useCache(vid string, ext string, w http.ResponseWriter, r *http.Request) bo
 		err    error
 		gziped bool
 	)
-	if ext == "mpd" {
+	switch ext {
+	case "mpd":
 		data, exist, err = db.GetCacheItem(vid, db.TABLE_CACHEMPD)
-	} else if ext == "json" {
+	case "json":
 		data, exist, err = db.GetCacheItem(vid, db.TABLE_CACHEJSON)
-	} else if ext == "xml" {
+	case "xml":
 		var lang = r.URL.Query().Get("lang")
 		if lang == "" { // 自动选择语言时不走缓存
 			return false
@@ -123,7 +124,7 @@ func useCache(vid string, ext string, w http.ResponseWriter, r *http.Request) bo
 				gziped = true
 			}
 		}
-	} else {
+	default:
 		return false
 	}
 	if err != nil {
@@ -197,7 +198,7 @@ func ProxyAuto(w http.ResponseWriter, r *http.Request, match []string) error {
 }
 
 func findItem(info *youtubevideoparser.VideoInfo, prefers string) *youtubevideoparser.StreamItem {
-	for _, itag := range strings.Split(prefers+","+preferList, ",") {
+	for itag := range strings.SplitSeq(prefers+","+preferList, ",") {
 		if v, ok := info.Streams[itag]; ok {
 			if v.URL != "" {
 				return v

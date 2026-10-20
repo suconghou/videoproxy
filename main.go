@@ -29,8 +29,9 @@ func serve(host string, port int) error {
 
 func routeMatch(w http.ResponseWriter, r *http.Request) {
 	for _, p := range route.Route {
-		if p.Reg.MatchString(r.URL.Path) {
-			if err := p.Handler(w, r, p.Reg.FindStringSubmatch(r.URL.Path)); err != nil {
+		matches := p.Reg.FindStringSubmatch(r.URL.Path)
+		if matches != nil {
+			if err := p.Handler(w, r, matches); err != nil {
 				util.Log.Print(r.URL.Path, " ", err)
 			}
 			return

@@ -20,7 +20,7 @@ func init() {
 	go func() {
 		for {
 			var now = time.Now().Unix()
-			caches.Range(func(k interface{}, v interface{}) bool {
+			caches.Range(func(k any, v any) bool {
 				t, ok := v.(*cacheItem)
 				if !ok || t.t < now {
 					caches.Delete(k)

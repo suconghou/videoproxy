@@ -121,7 +121,7 @@ func formatItem(ID string, duration int, item *youtubevideoparser.StreamItem) (s
 }
 
 func findStream(info *youtubevideoparser.VideoInfo, prefers string, mime string) *youtubevideoparser.StreamItem {
-	for _, itag := range strings.Split(prefers, ",") {
+	for itag := range strings.SplitSeq(prefers, ",") {
 		if v, ok := info.Streams[itag]; ok {
 			if v.ContentLength != "" && v.InitRange.Start != "" && v.IndexRange.Start != "" {
 				return v

@@ -46,7 +46,7 @@ var (
 		"Content-Encoding",
 	}
 	bufferPool = sync.Pool{
-		New: func() interface{} {
+		New: func() any {
 			return bytes.NewBuffer(make([]byte, 32*1024))
 		},
 	}
@@ -57,7 +57,7 @@ type cacheItem struct {
 	time    int64
 	ctx     context.Context
 	cancel  context.CancelFunc
-	data    *bytes.Buffer
+	data    []byte // immutable, safe to return to callers
 	headers http.Header
 	status  int
 	err     error
@@ -100,9 +100,9 @@ func (l *LockGeter) Get(url string, client http.Client, reqHeaders http.Header, 
 		if v.data == nil {
 			return nil, v.headers, v.status, v.err
 		}
-		return v.data.Bytes(), v.headers, v.status, v.err
+		return v.data, v.headers, v.status, v.err
 	}
-	data, headers, status, err := Get(url, client, reqHeaders)
+	data, headers, status, err := getBytes(url, client, reqHeaders)
 	v.data = data
 	v.headers = headers
 	v.status = status
@@ -112,7 +112,7 @@ func (l *LockGeter) Get(url string, client http.Client, reqHeaders http.Header, 
 	if data == nil {
 		return nil, headers, status, err
 	}
-	return data.Bytes(), headers, status, err
+	return data, headers, status, err
 }
 
 func (l *LockGeter) clean(now int64) {
@@ -120,14 +120,10 @@ func (l *LockGeter) clean(now int64) {
 		return
 	}
 	l.time = now
-	l.caches.Range(func(key, value interface{}) bool {
+	l.caches.Range(func(key, value any) bool {
 		var v = value.(*cacheItem)
 		if v.time < now && !v.loading {
 			v.cancel()
-			if v.data != nil {
-				v.data.Reset()
-				bufferPool.Put(v.data)
-			}
 			l.caches.Delete(key)
 		}
 		return true
@@ -139,8 +135,17 @@ func GetByCacher(url string, client http.Client, reqHeaders http.Header) ([]byte
 	return HttpProvider.Get(url, client, reqHeaders, 86400)
 }
 
-// Get http data, the return value should be readonly
+// Get http data, the returned buffer is caller-owned and readonly.
 func Get(url string, client http.Client, reqHeaders http.Header) (*bytes.Buffer, http.Header, int, error) {
+	data, headers, status, err := getBytes(url, client, reqHeaders)
+	if data == nil {
+		return nil, headers, status, err
+	}
+	return bytes.NewBuffer(bytes.Clone(data)), headers, status, err
+}
+
+// getBytes http data, the return value is immutable and can be held forever.
+func getBytes(url string, client http.Client, reqHeaders http.Header) ([]byte, http.Header, int, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, nil, 0, err
@@ -154,15 +159,18 @@ func Get(url string, client http.Client, reqHeaders http.Header) (*bytes.Buffer,
 	if resp.StatusCode != http.StatusOK {
 		return nil, resp.Header, resp.StatusCode, fmt.Errorf("%s : %s", url, resp.Status)
 	}
-	var buffer = bufferPool.Get().(*bytes.Buffer)
-	buffer.Reset()
-	_, err = buffer.ReadFrom(resp.Body)
+	var buf = bufferPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	_, err = buf.ReadFrom(resp.Body)
 	if err != nil {
-		buffer.Reset()
-		bufferPool.Put(buffer)
+		buf.Reset()
+		bufferPool.Put(buf)
 		return nil, resp.Header, resp.StatusCode, err
 	}
-	return buffer, resp.Header, resp.StatusCode, nil
+	data := bytes.Clone(buf.Bytes())
+	buf.Reset()
+	bufferPool.Put(buf)
+	return data, resp.Header, resp.StatusCode, nil
 }
 
 // ProxyData only do get request and pipe without range
